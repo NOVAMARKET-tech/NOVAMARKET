@@ -9,24 +9,52 @@
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-:root{--bg:#f2f5f3;--ink:#10291f;--muted:#5b6b63;--card:#fff;--line:#d9e1dc;--accent:#f5b800;--green:#0c6b45}
+:root{--bg:#f2f5f3;--ink:#10291f;--ink2:#163a2a;--muted:#5b6b63;--card:#fff;--line:#d9e1dc;--accent:#f5b800;--green:#0c6b45}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;line-height:1.5}
-header{background:var(--ink);color:#fff;padding:32px 20px 28px}
-.wrap{max-width:1000px;margin:0 auto}
-h1{margin:0;font-size:clamp(2rem,7vw,3.2rem);font-weight:800;letter-spacing:-.02em}
-header p{margin:6px 0 0;color:#b9cbc2}
-.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+
+/* ---------- HERO ---------- */
+header{
+  position:relative;
+  color:#fff;
+  padding:0;
+  overflow:hidden;
+  isolation:isolate;
+}
+.hero-bg{
+  position:absolute;inset:0;z-index:-2;
+  background:
+    linear-gradient(180deg, rgba(9,26,19,.55) 0%, rgba(9,26,19,.72) 55%, rgba(9,26,19,.96) 100%),
+    url('https://commons.wikimedia.org/wiki/Special:FilePath/Cotonouskyline.jpg') center 40%/cover no-repeat;
+  background-color:var(--ink);
+}
+header .wrap{max-width:1080px;margin:0 auto;padding:52px 20px 34px;position:relative}
+.eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:.85rem;color:#cfe0d6;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);padding:5px 12px;border-radius:999px;margin-bottom:14px}
+h1{margin:0;font-size:clamp(2.1rem,7vw,3.4rem);font-weight:800;letter-spacing:-.02em}
+header p.tag{margin:8px 0 0;color:#cfe0d6;font-size:1.05rem;max-width:46ch}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:26px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.18);padding:12px;border-radius:16px;backdrop-filter:blur(2px)}
 input,select,textarea{font:inherit;padding:11px 14px;border-radius:10px;border:0;min-width:0}
 .bar input,.bar select{flex:1 1 180px}
 .bar .small{flex:1 1 120px}
 .publish,.btn{font:inherit;font-weight:600;background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
 .alt{background:#e3ebe6}
-.out{background:transparent;color:#b9cbc2;border:1px solid #3d5a4d}
+.out{background:transparent;color:#eaf2ee;border:1px solid rgba(255,255,255,.4)}
+.credit{position:absolute;right:14px;bottom:8px;font-size:.7rem;color:rgba(255,255,255,.55)}
+.credit a{color:inherit}
+
+/* ---------- CATEGORY CHIPS ---------- */
+.catchips{display:flex;gap:10px;overflow-x:auto;padding:22px 20px 6px;max-width:1080px;margin:0 auto;scrollbar-width:thin}
+.catchip{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:6px;width:96px;padding:14px 8px;background:var(--card);border:1px solid var(--line);border-radius:14px;cursor:pointer;font:inherit;color:var(--ink);text-align:center}
+.catchip span{font-size:1.5rem}
+.catchip small{font-size:.78rem;font-weight:600;line-height:1.15}
+.catchip.active{background:var(--ink);border-color:var(--ink);color:#fff}
+
 main{padding:24px 20px 60px}
+.wrap{max-width:1080px;margin:0 auto}
 #status{color:var(--muted);margin:0 0 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .15s}
+.card:hover{box-shadow:0 8px 22px rgba(16,41,31,.1)}
 .imgbox{position:relative}
 .img{aspect-ratio:4/3;background:#e3ebe6 center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.85rem;cursor:pointer}
 .heart{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:20px;cursor:pointer;line-height:1}
@@ -41,9 +69,10 @@ main{padding:24px 20px 60px}
 .mine .del{border-color:#d8b4b4;color:#a33}
 h2.sec{margin:44px 0 14px;font-size:1.5rem}
 .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
-.service{background:var(--ink);color:#fff;border-radius:14px;padding:20px 10px;text-align:center}
+.service{background:var(--ink);color:#fff;border-radius:14px;padding:22px 14px;text-align:center}
 .service span{font-size:2rem;display:block}
-.service h3{margin:4px 0 0;font-size:1.05rem}
+.service h3{margin:6px 0 2px;font-size:1.05rem}
+.service p{margin:0;font-size:.85rem;color:#b9cbc2}
 .zone{color:var(--muted);margin:14px 0 10px}
 .contacts{display:flex;gap:10px;flex-wrap:wrap}
 .contacts a{text-decoration:none;border-radius:10px;padding:11px 18px;font-weight:600}
@@ -64,23 +93,34 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
 .gallery img{width:100%;flex:0 0 100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start}
 .desc{white-space:pre-wrap;margin:10px 0}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){
+  .bar{flex-direction:column}
+  .catchip{width:84px}
+}
 </style>
 </head>
 <body>
-<header><div class="wrap">
-  <h1>NOVAMARKET</h1>
-  <p>Marketplace des petites annonces au Bénin</p>
-  <div class="bar">
-    <input id="q" type="search" placeholder="Rechercher une annonce">
-    <select id="cat"><option value="">Toutes les catégories</option></select>
-    <input id="loc" class="small" type="search" placeholder="Ville">
-    <input id="pmin" class="small" type="number" min="0" placeholder="Prix min">
-    <input id="pmax" class="small" type="number" min="0" placeholder="Prix max">
-    <button class="publish" id="pubBtn">Publier une annonce</button>
-    <button class="publish out" id="favBtn" hidden>♡ Mes favoris</button>
-    <button class="publish out" id="outBtn" hidden>Se déconnecter</button>
+<header>
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="wrap">
+    <span class="eyebrow">🇧🇯 Le Bénin à portée de clic</span>
+    <h1>NOVAMARKET</h1>
+    <p class="tag">Achetez, vendez et échangez partout au Bénin : téléphones, véhicules, immobilier, maison, mode et bien plus.</p>
+    <div class="bar">
+      <input id="q" type="search" placeholder="Rechercher une annonce">
+      <select id="cat"><option value="">Toutes les catégories</option></select>
+      <input id="loc" class="small" type="search" placeholder="Ville">
+      <input id="pmin" class="small" type="number" min="0" placeholder="Prix min">
+      <input id="pmax" class="small" type="number" min="0" placeholder="Prix max">
+      <button class="publish" id="pubBtn">Publier une annonce</button>
+      <button class="publish out" id="favBtn" hidden>♡ Mes favoris</button>
+      <button class="publish out" id="outBtn" hidden>Se déconnecter</button>
+    </div>
   </div>
-</div></header>
+  <p class="credit">Photo : Cotonou skyline, MVN — <a href="https://commons.wikimedia.org/wiki/File:Cotonouskyline.jpg" target="_blank" rel="noopener">Wikimedia Commons</a>, CC BY 2.0</p>
+</header>
+
+<div id="catChips" class="catchips"></div>
 
 <main><div class="wrap">
   <p id="status">Chargement des annonces…</p>
@@ -88,9 +128,9 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
 
   <h2 class="sec" id="services">Services NovaMarket</h2>
   <div class="services">
-    <div class="service"><span>🚚</span><h3>Livraison</h3></div>
-    <div class="service"><span>🧼</span><h3>Nettoyage</h3></div>
-    <div class="service"><span>👔</span><h3>Pressing</h3></div>
+    <div class="service"><span>🚚</span><h3>Livraison</h3><p>Rapide et sécurisée</p></div>
+    <div class="service"><span>🧼</span><h3>Nettoyage</h3><p>Un espace propre, un esprit léger</p></div>
+    <div class="service"><span>👔</span><h3>Pressing</h3><p>Vos vêtements entre de bonnes mains</p></div>
   </div>
   <p class="zone">Zone : Bénin</p>
   <div class="contacts">
@@ -142,6 +182,35 @@ let all = [], user = null, favs = new Set(), onlyFavs = false, editId = null, ca
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
+/* icône par mot-clé de catégorie, avec repli générique */
+function catIcon(name){
+  const n = (name || "").toLowerCase();
+  if(/t[ée]l[ée]phone|mobile|smartphone/.test(n)) return "📱";
+  if(/informatique|ordinateur|pc|laptop/.test(n)) return "💻";
+  if(/v[ée]hicule|voiture|moto|auto/.test(n)) return "🚗";
+  if(/immobilier|maison à vendre|terrain|appartement/.test(n)) return "🏠";
+  if(/maison|meuble|d[ée]co/.test(n)) return "🛋️";
+  if(/v[êe]tement|mode|chaussure/.test(n)) return "👕";
+  if(/console|jeu|gaming/.test(n)) return "🎮";
+  if(/service/.test(n)) return "🛠️";
+  if(/emploi|job|travail/.test(n)) return "💼";
+  return "🏷️";
+}
+
+function renderChips(){
+  const active = $("cat").value;
+  const opts = Object.entries(cats);
+  $("catChips").innerHTML = `<button type="button" class="catchip${active===""?" active":""}" data-cat=""><span>🗂️</span><small>Tout</small></button>` +
+    opts.map(([id,name]) => `<button type="button" class="catchip${String(id)===active?" active":""}" data-cat="${id}"><span>${catIcon(name)}</span><small>${esc(name)}</small></button>`).join("");
+}
+$("catChips").addEventListener("click", e => {
+  const b = e.target.closest("[data-cat]");
+  if(!b) return;
+  $("cat").value = b.dataset.cat;
+  renderChips();
+  render();
+});
+
 async function loadAll(){
   try{
     const [c, l] = await Promise.all([
@@ -155,6 +224,7 @@ async function loadAll(){
     $("cat").innerHTML = '<option value="">Toutes les catégories</option>' + opts;
     $("fCat").innerHTML = opts;
     all = l.data;
+    renderChips();
     render();
   }catch(e){
     $("status").textContent = "Impossible de charger les annonces : " + (e.message || e);
@@ -354,7 +424,7 @@ $("pubForm").addEventListener("submit", async e => {
 });
 
 ["q","loc","pmin","pmax"].forEach(id => $(id).addEventListener("input", render));
-$("cat").addEventListener("change", render);
+$("cat").addEventListener("change", () => { renderChips(); render(); });
 loadAll();
 </script>
 </body>
