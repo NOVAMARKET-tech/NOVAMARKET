@@ -28,14 +28,17 @@ main{padding:24px 20px 60px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
 .imgbox{position:relative}
-.img{aspect-ratio:4/3;background:#e3ebe6 center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.85rem}
+.img{aspect-ratio:4/3;background:#e3ebe6 center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.85rem;cursor:pointer}
 .heart{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:20px;cursor:pointer;line-height:1}
+.count{position:absolute;bottom:8px;left:8px;background:rgba(16,41,31,.8);color:#fff;border-radius:8px;padding:2px 8px;font-size:.8rem}
 .body{padding:14px;display:flex;flex-direction:column;gap:4px;flex:1}
-.body h3{margin:0;font-size:1.05rem}
+.body h3{margin:0;font-size:1.05rem;cursor:pointer}
 .price{font-weight:800;color:var(--green);font-size:1.1rem}
 .meta{color:var(--muted);font-size:.88rem}
 .wa{margin-top:auto;text-align:center;text-decoration:none;background:var(--green);color:#fff;border-radius:10px;padding:9px;font-weight:600}
-.del{background:none;border:1px solid #d8b4b4;color:#a33;border-radius:10px;padding:7px;font:inherit;font-size:.85rem;cursor:pointer;margin-top:6px}
+.mine{display:flex;gap:6px;margin-top:6px}
+.mine button{flex:1;background:none;border:1px solid var(--line);border-radius:10px;padding:7px;font:inherit;font-size:.85rem;cursor:pointer}
+.mine .del{border-color:#d8b4b4;color:#a33}
 h2.sec{margin:44px 0 14px;font-size:1.5rem}
 .services{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
 .service{background:var(--ink);color:#fff;border-radius:14px;padding:20px 10px;text-align:center}
@@ -47,7 +50,7 @@ h2.sec{margin:44px 0 14px;font-size:1.5rem}
 .c-wa{background:var(--green);color:#fff}
 .c-tel{background:var(--ink);color:#fff}
 footer{background:var(--ink);color:#b9cbc2;text-align:center;padding:20px;font-size:.9rem}
-dialog{border:0;border-radius:16px;padding:22px;width:min(440px,92vw);color:var(--ink);font-family:inherit}
+dialog{border:0;border-radius:16px;padding:22px;width:min(440px,92vw);max-height:92vh;color:var(--ink);font-family:inherit}
 dialog::backdrop{background:rgba(16,41,31,.6)}
 dialog h2{margin:0 0 4px}
 dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px solid var(--line)}
@@ -57,6 +60,9 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
 .msg{color:#a33;min-height:1.2em;margin:4px 0;font-size:.9rem}
 .hint{color:var(--muted);margin:0 0 8px}
 .close{background:none;border:0;color:var(--muted);cursor:pointer;margin-top:8px;font:inherit}
+.gallery{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x mandatory;margin:10px 0}
+.gallery img{width:100%;flex:0 0 100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;scroll-snap-align:start}
+.desc{white-space:pre-wrap;margin:10px 0}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 </style>
 </head>
@@ -106,7 +112,7 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
 </dialog>
 
 <dialog id="formD">
-  <h2>Publier une annonce</h2>
+  <h2 id="formTitle">Publier une annonce</h2>
   <form id="pubForm">
     <input id="fTitle" placeholder="Titre" required>
     <select id="fCat" required></select>
@@ -114,10 +120,16 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
     <input id="fLoc" placeholder="Ville (ex : Cotonou)" required>
     <input id="fWa" placeholder="Numéro WhatsApp (ex : 22901XXXXXXXX)" required>
     <textarea id="fDesc" rows="3" placeholder="Description"></textarea>
-    <input id="fPhoto" type="file" accept="image/*">
+    <label class="hint" for="fPhoto">Photos (6 maximum)</label>
+    <input id="fPhoto" type="file" accept="image/*" multiple>
     <p id="fMsg" class="msg"></p>
-    <button class="btn full" type="submit">Publier</button>
+    <button class="btn full" id="fSubmit" type="submit">Publier</button>
   </form>
+  <button class="close" onclick="this.closest('dialog').close()">Fermer</button>
+</dialog>
+
+<dialog id="detailD">
+  <div id="detailBody"></div>
   <button class="close" onclick="this.closest('dialog').close()">Fermer</button>
 </dialog>
 
@@ -126,7 +138,7 @@ const SUPABASE_URL = "https://esshiqgxlbynyungbwfe.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzc2hpcWd4bGJ5bnl1bmdid2ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzM2MDcsImV4cCI6MjEwNTgwOTYwN30.hcvIwcmKTiGzSeNWGkwuJam1-c-tl4zlLrvwOxokQ9E";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let all = [], user = null, favs = new Set(), onlyFavs = false;
+let all = [], user = null, favs = new Set(), onlyFavs = false, editId = null, cats = {};
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -138,6 +150,7 @@ async function loadAll(){
     ]);
     if(c.error) throw c.error;
     if(l.error) throw l.error;
+    c.data.forEach(x => cats[x.id] = x.name);
     const opts = c.data.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
     $("cat").innerHTML = '<option value="">Toutes les catégories</option>' + opts;
     $("fCat").innerHTML = opts;
@@ -173,27 +186,58 @@ function render(){
     ? rows.length + " annonce" + (rows.length > 1 ? "s" : "")
     : (onlyFavs ? "Aucun favori pour le moment." : "Aucune annonce pour le moment. Sois le premier à publier !");
   $("grid").innerHTML = rows.map(l => {
-    const img = l.listing_images?.[0]?.image_url;
+    const imgs = l.listing_images || [];
+    const img = imgs[0]?.image_url;
     const num = String(l.whatsapp || "").replace(/\D/g, "");
     const id = esc(l.id);
     const isFav = favs.has(String(l.id));
     const mine = user && l.user_id === user.id;
     return `<article class="card">
       <div class="imgbox">
-        <div class="img" ${img ? `style="background-image:url('${esc(img)}')"` : ""}>${img ? "" : "Pas de photo"}</div>
+        <div class="img" data-open="${id}" ${img ? `style="background-image:url('${esc(img)}')"` : ""}>${img ? "" : "Pas de photo"}</div>
         <button class="heart" data-fav="${id}" aria-label="Favori">${isFav ? "❤️" : "🤍"}</button>
+        ${imgs.length > 1 ? `<span class="count">📷 ${imgs.length}</span>` : ""}
       </div>
       <div class="body">
-        <h3>${esc(l.title)}</h3>
+        <h3 data-open="${id}">${esc(l.title)}</h3>
         <div class="price">${Number(l.price || 0).toLocaleString("fr-FR")} FCFA</div>
         <div class="meta">${esc(l.location)}</div>
         ${num ? `<a class="wa" href="https://wa.me/${num}" target="_blank" rel="noopener">Contacter sur WhatsApp</a>` : ""}
-        ${mine ? `<button class="del" data-del="${id}">Supprimer mon annonce</button>` : ""}
+        ${mine ? `<div class="mine"><button data-edit="${id}">Modifier</button><button class="del" data-del="${id}">Supprimer</button></div>` : ""}
       </div></article>`;
   }).join("");
 }
 
-/* Clics sur cœur et suppression */
+function openDetail(id){
+  const l = all.find(x => String(x.id) === String(id));
+  if(!l) return;
+  const imgs = (l.listing_images || []).map(i => `<img src="${esc(i.image_url)}" alt="">`).join("");
+  const num = String(l.whatsapp || "").replace(/\D/g, "");
+  $("detailBody").innerHTML = `
+    ${imgs ? `<div class="gallery">${imgs}</div>` : ""}
+    <h2>${esc(l.title)}</h2>
+    <div class="price">${Number(l.price || 0).toLocaleString("fr-FR")} FCFA</div>
+    <div class="meta">${esc(cats[l.category_id] || "")} · ${esc(l.location)}</div>
+    <p class="desc">${esc(l.description || "Pas de description.")}</p>
+    ${num ? `<a class="btn full" style="display:block;text-align:center;text-decoration:none;background:var(--green);color:#fff" href="https://wa.me/${num}" target="_blank" rel="noopener">Contacter sur WhatsApp</a>` : ""}`;
+  $("detailD").showModal();
+}
+
+function openForm(l){
+  editId = l ? l.id : null;
+  $("formTitle").textContent = l ? "Modifier mon annonce" : "Publier une annonce";
+  $("fSubmit").textContent = l ? "Enregistrer" : "Publier";
+  $("fTitle").value = l?.title || "";
+  if(l) $("fCat").value = String(l.category_id);
+  $("fPrice").value = l?.price ?? "";
+  $("fLoc").value = l?.location || "";
+  $("fWa").value = l?.whatsapp || "";
+  $("fDesc").value = l?.description || "";
+  $("fPhoto").value = "";
+  $("fMsg").textContent = l ? "Les nouvelles photos s'ajoutent aux anciennes." : "";
+  $("formD").showModal();
+}
+
 $("grid").addEventListener("click", async e => {
   const f = e.target.closest("[data-fav]");
   if(f){
@@ -208,6 +252,8 @@ $("grid").addEventListener("click", async e => {
     }
     return render();
   }
+  const ed = e.target.closest("[data-edit]");
+  if(ed) return openForm(all.find(x => String(x.id) === ed.dataset.edit));
   const d = e.target.closest("[data-del]");
   if(d){
     if(!confirm("Supprimer définitivement cette annonce ?")) return;
@@ -215,11 +261,12 @@ $("grid").addEventListener("click", async e => {
     await sb.from("listing_images").delete().eq("listing_id", id);
     const r = await sb.from("listings").delete().eq("id", id);
     if(r.error) return alert("Erreur : " + r.error.message);
-    await loadAll();
+    return loadAll();
   }
+  const o = e.target.closest("[data-open]");
+  if(o) openDetail(o.dataset.open);
 });
 
-/* Connexion */
 function updateUI(){
   $("outBtn").hidden = !user;
   $("favBtn").hidden = !user;
@@ -232,7 +279,7 @@ sb.auth.onAuthStateChange((_e, session) => {
 sb.auth.getSession().then(({data}) => { user = data.session?.user || null; updateUI(); loadFavs(); });
 
 const authMsg = (t, ok) => { $("authMsg").textContent = t; $("authMsg").style.color = ok ? "#0c6b45" : "#a33"; };
-$("pubBtn").onclick = () => user ? $("formD").showModal() : $("authD").showModal();
+$("pubBtn").onclick = () => user ? openForm(null) : $("authD").showModal();
 $("outBtn").onclick = () => { onlyFavs = false; $("favBtn").textContent = "♡ Mes favoris"; sb.auth.signOut(); };
 $("favBtn").onclick = () => {
   onlyFavs = !onlyFavs;
@@ -260,34 +307,45 @@ $("upBtn").onclick = async () => {
   $("authD").close();
 };
 
-/* Publication */
+async function uploadPhotos(files){
+  const urls = [];
+  for(const file of files){
+    const path = `${user.id}/${Date.now()}-${Math.random().toString(36).slice(2,7)}-${file.name.replace(/[^\w.]/g,"_")}`;
+    const up = await sb.storage.from("photos").upload(path, file);
+    if(up.error) throw up.error;
+    urls.push(sb.storage.from("photos").getPublicUrl(path).data.publicUrl);
+  }
+  return urls;
+}
+
 $("pubForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const msg = $("fMsg"); msg.textContent = "Publication en cours…";
+  const msg = $("fMsg"); msg.textContent = "Enregistrement en cours…";
   try{
-    let url = null;
-    const file = $("fPhoto").files[0];
-    if(file){
-      const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.]/g,"_")}`;
-      const up = await sb.storage.from("photos").upload(path, file);
-      if(up.error) throw up.error;
-      url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
-    }
-    const {data, error} = await sb.from("listings").insert({
-      user_id: user.id,
+    const files = Array.from($("fPhoto").files).slice(0, 6);
+    const urls = await uploadPhotos(files);
+    const fields = {
       category_id: Number($("fCat").value),
       title: $("fTitle").value.trim(),
       description: $("fDesc").value.trim(),
       price: Number($("fPrice").value),
       location: $("fLoc").value.trim(),
       whatsapp: $("fWa").value.replace(/\D/g,"")
-    }).select().single();
-    if(error) throw error;
-    if(url){
-      const r = await sb.from("listing_images").insert({listing_id:data.id, image_url:url});
+    };
+    let listingId = editId;
+    if(editId){
+      const r = await sb.from("listings").update(fields).eq("id", editId);
+      if(r.error) throw r.error;
+    }else{
+      const {data, error} = await sb.from("listings").insert({...fields, user_id: user.id}).select().single();
+      if(error) throw error;
+      listingId = data.id;
+    }
+    if(urls.length){
+      const r = await sb.from("listing_images").insert(urls.map(u => ({listing_id: listingId, image_url: u})));
       if(r.error) throw r.error;
     }
-    e.target.reset(); msg.textContent = "";
+    e.target.reset(); msg.textContent = ""; editId = null;
     $("formD").close();
     await loadAll();
   }catch(err){
