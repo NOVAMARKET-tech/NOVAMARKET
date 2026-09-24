@@ -31,12 +31,22 @@ document.addEventListener('click', async e => {
 });
 
 async function home() {
-  app.innerHTML = `<section class="hero"><h1>Achetez, vendez, échangez au Bénin</h1><p>Téléphones, voitures, immobilier, vêtements, services et bien plus encore.</p>
-  <form class="filters" id="ff"><input class="q" name="q" placeholder="Rechercher une annonce..." value="${esc(F.q)}">
+  app.innerHTML = `<section class="hero"><div class="hero-in">
+  <p class="brand">Nova<i>Market</i></p>
+  <h1>Le marché en ligne du Bénin</h1>
+  <p class="lead">Trouvez tout ce dont vous avez besoin : téléphones, voitures, immobilier, vêtements, maison, services et bien plus encore.</p>
+  <form id="ff"><div class="search"><span class="ic">🔍</span><input class="q" name="q" placeholder="Rechercher une annonce, une catégorie, une ville..." value="${esc(F.q)}"><button class="btn" type="submit">Rechercher</button></div>
+  <details class="more"><summary>Filtres avancés</summary><div class="more-grid">
   <select name="cat"><option value="">Toutes catégories</option>${CATS.map(c => `<option ${F.cat === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select>
   <input name="city" placeholder="Ville" value="${esc(F.city)}"><input name="min" type="number" min="0" placeholder="Prix min" value="${esc(F.min)}"><input name="max" type="number" min="0" placeholder="Prix max" value="${esc(F.max)}">
-  <button class="btn" style="grid-column:1/-1">Rechercher</button></form></section>
-  <div class="cats">${CATS.map(c => `<button class="cat ${F.cat === c[0] ? 'on' : ''}" data-c="${c[0]}"><span>${c[1]}</span>${c[0]}</button>`).join('')}</div>
+  <button class="btn alt" type="submit">Appliquer</button></div></details></form>
+  </div></section>
+  <div class="cats-wrap"><div class="cats-box" id="catsBox">${CATS.map(c => `<button class="cat ${F.cat === c[0] ? 'on' : ''}" data-c="${c[0]}"><span>${c[1]}</span>${c[0]}</button>`).join('')}</div></div>
+  <section class="svc-band"><div><h3>Nos services</h3><p>Pour vous faciliter la vie au quotidien</p></div>
+  <div class="svc-item"><span>🚚</span><div><b>Livraison</b><small>Rapide et sécurisée</small></div></div>
+  <div class="svc-item"><span>🧹</span><div><b>Nettoyage</b><small>Un espace propre, un esprit léger</small></div></div>
+  <div class="svc-item"><span>👔</span><div><b>Pressing</b><small>Entre de bonnes mains</small></div></div>
+  <div class="svc-contact"><span>💬 WhatsApp <b>0197392704</b></span><span>📍 Bénin</span></div></section>
   <h2>Annonces récentes</h2><div class="grid" id="list"><p class="none">Chargement...</p></div>`;
   $('#ff').onsubmit = e => { e.preventDefault(); F = Object.fromEntries(new FormData(e.target)); home(); };
   document.querySelectorAll('.cat').forEach(b => b.onclick = () => { F.cat = F.cat === b.dataset.c ? '' : b.dataset.c; home(); });
