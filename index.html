@@ -1,13 +1,104 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NOVAMARKET</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NOVAMARKET – Petites annonces au Bénin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f2f5f3;--ink:#10291f;--muted:#5b6b63;--card:#fff;--line:#d9e1dc;--accent:#f5b800;--green:#0c6b45}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:'Bricolage Grotesque',system-ui,sans-serif;line-height:1.5}
+header{background:var(--ink);color:#fff;padding:32px 20px 28px}
+.wrap{max-width:1000px;margin:0 auto}
+h1{margin:0;font-size:clamp(2rem,7vw,3.2rem);font-weight:800;letter-spacing:-.02em}
+header p{margin:6px 0 0;color:#b9cbc2}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
+input,select{font:inherit;padding:11px 14px;border-radius:10px;border:0;flex:1 1 180px;min-width:0}
+.publish{font:inherit;font-weight:600;background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+main{padding:24px 20px 60px}
+#status{color:var(--muted);margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.img{aspect-ratio:4/3;background:#e3ebe6 center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.85rem}
+.body{padding:14px;display:flex;flex-direction:column;gap:4px;flex:1}
+.body h3{margin:0;font-size:1.05rem}
+.price{font-weight:800;color:var(--green);font-size:1.1rem}
+.meta{color:var(--muted);font-size:.88rem}
+.wa{margin-top:auto;text-align:center;text-decoration:none;background:var(--green);color:#fff;border-radius:10px;padding:9px;font-weight:600}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+</style>
 </head>
-<body style="font-family:sans-serif;text-align:center;padding:40px">
+<body>
+<header><div class="wrap">
   <h1>NOVAMARKET</h1>
   <p>Marketplace des petites annonces au Bénin</p>
+  <div class="bar">
+    <input id="q" type="search" placeholder="Rechercher une annonce">
+    <select id="cat"><option value="">Toutes les catégories</option></select>
+    <button class="publish" onclick="alert('Publier une annonce : bientôt disponible')">Publier une annonce</button>
+  </div>
+</div></header>
+<main><div class="wrap">
+  <p id="status">Chargement des annonces…</p>
+  <div id="grid" class="grid"></div>
+</div></main>
+<script>
+const SUPABASE_URL = "https://esshiqgxlbynyungbwfe.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzc2hpcWd4bGJ5bnl1bmdid2ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzM2MDcsImV4cCI6MjEwNTgwOTYwN30.hcvIwcmKTiGzSeNWGkwuJam1-c-tl4zlLrvwOxokQ9E";
+
+let all = [];
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+async function api(path){
+  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
+  });
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
+
+async function init(){
+  try{
+    const [cats, list] = await Promise.all([
+      api("categories?select=id,name&order=name"),
+      api("listings?select=*,listing_images(image_url)&order=created_at.desc")
+    ]);
+    $("cat").innerHTML += cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
+    all = list;
+    render();
+  }catch(e){
+    $("status").textContent = "Impossible de charger les annonces (erreur " + e.message + "). Vérifie la clé anon et les règles d'accès Supabase.";
+  }
+}
+
+function render(){
+  const q = $("q").value.trim().toLowerCase(), c = $("cat").value;
+  const rows = all.filter(l =>
+    (!c || String(l.category_id) === c) &&
+    (!q || (l.title + " " + (l.description || "") + " " + (l.location || "")).toLowerCase().includes(q)));
+  $("status").textContent = rows.length
+    ? rows.length + " annonce" + (rows.length > 1 ? "s" : "")
+    : "Aucune annonce pour le moment. Sois le premier à publier !";
+  $("grid").innerHTML = rows.map(l => {
+    const img = l.listing_images?.[0]?.image_url;
+    const num = String(l.whatsapp || "").replace(/\D/g, "");
+    return `<article class="card">
+      <div class="img" ${img ? `style="background-image:url('${esc(img)}')"` : ""}>${img ? "" : "Pas de photo"}</div>
+      <div class="body">
+        <h3>${esc(l.title)}</h3>
+        <div class="price">${Number(l.price || 0).toLocaleString("fr-FR")} FCFA</div>
+        <div class="meta">${esc(l.location)}</div>
+        ${num ? `<a class="wa" href="https://wa.me/${num}" target="_blank" rel="noopener">Contacter sur WhatsApp</a>` : ""}
+      </div></article>`;
+  }).join("");
+}
+
+$("q").addEventListener("input", render);
+$("cat").addEventListener("change", render);
+init();
+</script>
 </body>
 </html>
