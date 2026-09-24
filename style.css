@@ -80,3 +80,13 @@ footer{text-align:center;color:var(--mute);font-size:13px;padding:26px 14px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:30}
 @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.more-grid{grid-template-columns:repeat(4,1fr) auto}.svc{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1000px){.grid{grid-template-columns:repeat(5,1fr)}.ph{height:150px}.cat{min-width:104px}}
+@media(max-width:520px){
+  .bar{height:auto;flex-wrap:wrap;padding:10px 0}
+  .logo b{font-size:19px}.logo small{display:none}
+  .bar .btn{order:3;width:100%;padding:11px;font-size:13px}
+  .hero-in{padding:36px 16px 88px}
+  .hero-in .brand{font-size:clamp(30px,11vw,40px)}
+  .hero-in h1{font-size:18px}
+  .hero-in .lead{font-size:13.5px}
+  .search{padding:5px 5px 5px 14px}.search input{font-size:13.5px}.search .btn{padding:11px 16px;font-size:13px}
+}
