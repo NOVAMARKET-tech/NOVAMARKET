@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>NOVAMARKET – Petites annonces au Bénin</title>
+<meta name="theme-color" content="#10291f">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -18,6 +19,7 @@ header p{margin:6px 0 0;color:#b9cbc2}
 .bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
 input,select,textarea{font:inherit;padding:11px 14px;border-radius:10px;border:0;min-width:0}
 .bar input,.bar select{flex:1 1 180px}
+.bar .small{flex:1 1 120px}
 .publish,.btn{font:inherit;font-weight:600;background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
 .alt{background:#e3ebe6}
 .out{background:transparent;color:#b9cbc2;border:1px solid #3d5a4d}
@@ -25,12 +27,26 @@ main{padding:24px 20px 60px}
 #status{color:var(--muted);margin:0 0 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.imgbox{position:relative}
 .img{aspect-ratio:4/3;background:#e3ebe6 center/cover no-repeat;display:grid;place-items:center;color:var(--muted);font-size:.85rem}
+.heart{position:absolute;top:8px;right:8px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);font-size:20px;cursor:pointer;line-height:1}
 .body{padding:14px;display:flex;flex-direction:column;gap:4px;flex:1}
 .body h3{margin:0;font-size:1.05rem}
 .price{font-weight:800;color:var(--green);font-size:1.1rem}
 .meta{color:var(--muted);font-size:.88rem}
 .wa{margin-top:auto;text-align:center;text-decoration:none;background:var(--green);color:#fff;border-radius:10px;padding:9px;font-weight:600}
+.del{background:none;border:1px solid #d8b4b4;color:#a33;border-radius:10px;padding:7px;font:inherit;font-size:.85rem;cursor:pointer;margin-top:6px}
+h2.sec{margin:44px 0 14px;font-size:1.5rem}
+.services{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+.service{background:var(--ink);color:#fff;border-radius:14px;padding:20px 10px;text-align:center}
+.service span{font-size:2rem;display:block}
+.service h3{margin:4px 0 0;font-size:1.05rem}
+.zone{color:var(--muted);margin:14px 0 10px}
+.contacts{display:flex;gap:10px;flex-wrap:wrap}
+.contacts a{text-decoration:none;border-radius:10px;padding:11px 18px;font-weight:600}
+.c-wa{background:var(--green);color:#fff}
+.c-tel{background:var(--ink);color:#fff}
+footer{background:var(--ink);color:#b9cbc2;text-align:center;padding:20px;font-size:.9rem}
 dialog{border:0;border-radius:16px;padding:22px;width:min(440px,92vw);color:var(--ink);font-family:inherit}
 dialog::backdrop{background:rgba(16,41,31,.6)}
 dialog h2{margin:0 0 4px}
@@ -51,18 +67,37 @@ dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px so
   <div class="bar">
     <input id="q" type="search" placeholder="Rechercher une annonce">
     <select id="cat"><option value="">Toutes les catégories</option></select>
+    <input id="loc" class="small" type="search" placeholder="Ville">
+    <input id="pmin" class="small" type="number" min="0" placeholder="Prix min">
+    <input id="pmax" class="small" type="number" min="0" placeholder="Prix max">
     <button class="publish" id="pubBtn">Publier une annonce</button>
+    <button class="publish out" id="favBtn" hidden>♡ Mes favoris</button>
     <button class="publish out" id="outBtn" hidden>Se déconnecter</button>
   </div>
 </div></header>
+
 <main><div class="wrap">
   <p id="status">Chargement des annonces…</p>
   <div id="grid" class="grid"></div>
+
+  <h2 class="sec" id="services">Services NovaMarket</h2>
+  <div class="services">
+    <div class="service"><span>🚚</span><h3>Livraison</h3></div>
+    <div class="service"><span>🧼</span><h3>Nettoyage</h3></div>
+    <div class="service"><span>👔</span><h3>Pressing</h3></div>
+  </div>
+  <p class="zone">Zone : Bénin</p>
+  <div class="contacts">
+    <a class="c-wa" href="https://wa.me/2290197392704" target="_blank" rel="noopener">WhatsApp : 01 97 39 27 04</a>
+    <a class="c-tel" href="tel:+2290161209887">Appeler : 01 61 20 98 87</a>
+  </div>
 </div></main>
+
+<footer>© 2026 NovaMarket – Bénin</footer>
 
 <dialog id="authD">
   <h2>Connexion</h2>
-  <p class="hint">Connecte-toi pour publier une annonce.</p>
+  <p class="hint">Connecte-toi pour publier une annonce ou utiliser tes favoris.</p>
   <input id="em" type="email" placeholder="Email" autocomplete="email">
   <input id="pw" type="password" placeholder="Mot de passe (6 caractères minimum)" autocomplete="current-password">
   <p id="authMsg" class="msg"></p>
@@ -91,7 +126,7 @@ const SUPABASE_URL = "https://esshiqgxlbynyungbwfe.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzc2hpcWd4bGJ5bnl1bmdid2ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzM2MDcsImV4cCI6MjEwNTgwOTYwN30.hcvIwcmKTiGzSeNWGkwuJam1-c-tl4zlLrvwOxokQ9E";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let all = [], user = null;
+let all = [], user = null, favs = new Set(), onlyFavs = false;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
@@ -113,38 +148,97 @@ async function loadAll(){
   }
 }
 
+async function loadFavs(){
+  favs = new Set();
+  if(user){
+    const {data} = await sb.from("favorites").select("listing_id");
+    (data || []).forEach(f => favs.add(String(f.listing_id)));
+  }
+  render();
+}
+
 function render(){
   const q = $("q").value.trim().toLowerCase(), c = $("cat").value;
+  const loc = $("loc").value.trim().toLowerCase();
+  const pmin = $("pmin").value === "" ? null : Number($("pmin").value);
+  const pmax = $("pmax").value === "" ? null : Number($("pmax").value);
   const rows = all.filter(l =>
     (!c || String(l.category_id) === c) &&
-    (!q || (l.title + " " + (l.description || "") + " " + (l.location || "")).toLowerCase().includes(q)));
+    (!q || (l.title + " " + (l.description || "") + " " + (l.location || "")).toLowerCase().includes(q)) &&
+    (!loc || String(l.location || "").toLowerCase().includes(loc)) &&
+    (pmin === null || Number(l.price) >= pmin) &&
+    (pmax === null || Number(l.price) <= pmax) &&
+    (!onlyFavs || favs.has(String(l.id))));
   $("status").textContent = rows.length
     ? rows.length + " annonce" + (rows.length > 1 ? "s" : "")
-    : "Aucune annonce pour le moment. Sois le premier à publier !";
+    : (onlyFavs ? "Aucun favori pour le moment." : "Aucune annonce pour le moment. Sois le premier à publier !");
   $("grid").innerHTML = rows.map(l => {
     const img = l.listing_images?.[0]?.image_url;
     const num = String(l.whatsapp || "").replace(/\D/g, "");
+    const id = esc(l.id);
+    const isFav = favs.has(String(l.id));
+    const mine = user && l.user_id === user.id;
     return `<article class="card">
-      <div class="img" ${img ? `style="background-image:url('${esc(img)}')"` : ""}>${img ? "" : "Pas de photo"}</div>
+      <div class="imgbox">
+        <div class="img" ${img ? `style="background-image:url('${esc(img)}')"` : ""}>${img ? "" : "Pas de photo"}</div>
+        <button class="heart" data-fav="${id}" aria-label="Favori">${isFav ? "❤️" : "🤍"}</button>
+      </div>
       <div class="body">
         <h3>${esc(l.title)}</h3>
         <div class="price">${Number(l.price || 0).toLocaleString("fr-FR")} FCFA</div>
         <div class="meta">${esc(l.location)}</div>
         ${num ? `<a class="wa" href="https://wa.me/${num}" target="_blank" rel="noopener">Contacter sur WhatsApp</a>` : ""}
+        ${mine ? `<button class="del" data-del="${id}">Supprimer mon annonce</button>` : ""}
       </div></article>`;
   }).join("");
 }
 
+/* Clics sur cœur et suppression */
+$("grid").addEventListener("click", async e => {
+  const f = e.target.closest("[data-fav]");
+  if(f){
+    if(!user) return $("authD").showModal();
+    const id = f.dataset.fav;
+    if(favs.has(id)){
+      await sb.from("favorites").delete().eq("user_id", user.id).eq("listing_id", id);
+      favs.delete(id);
+    }else{
+      const r = await sb.from("favorites").insert({user_id: user.id, listing_id: id});
+      if(!r.error) favs.add(id);
+    }
+    return render();
+  }
+  const d = e.target.closest("[data-del]");
+  if(d){
+    if(!confirm("Supprimer définitivement cette annonce ?")) return;
+    const id = d.dataset.del;
+    await sb.from("listing_images").delete().eq("listing_id", id);
+    const r = await sb.from("listings").delete().eq("id", id);
+    if(r.error) return alert("Erreur : " + r.error.message);
+    await loadAll();
+  }
+});
+
 /* Connexion */
+function updateUI(){
+  $("outBtn").hidden = !user;
+  $("favBtn").hidden = !user;
+}
 sb.auth.onAuthStateChange((_e, session) => {
   user = session?.user || null;
-  $("outBtn").hidden = !user;
+  updateUI();
+  setTimeout(loadFavs, 0);
 });
-sb.auth.getSession().then(({data}) => { user = data.session?.user || null; $("outBtn").hidden = !user; });
+sb.auth.getSession().then(({data}) => { user = data.session?.user || null; updateUI(); loadFavs(); });
 
 const authMsg = (t, ok) => { $("authMsg").textContent = t; $("authMsg").style.color = ok ? "#0c6b45" : "#a33"; };
 $("pubBtn").onclick = () => user ? $("formD").showModal() : $("authD").showModal();
-$("outBtn").onclick = () => sb.auth.signOut();
+$("outBtn").onclick = () => { onlyFavs = false; $("favBtn").textContent = "♡ Mes favoris"; sb.auth.signOut(); };
+$("favBtn").onclick = () => {
+  onlyFavs = !onlyFavs;
+  $("favBtn").textContent = onlyFavs ? "Toutes les annonces" : "♡ Mes favoris";
+  render();
+};
 
 $("inBtn").onclick = async () => {
   authMsg("Connexion…", true);
@@ -153,7 +247,7 @@ $("inBtn").onclick = async () => {
     if(/not confirmed/i.test(error.message)) return authMsg("Email pas encore confirmé. Clique sur le lien reçu par email.");
     return authMsg("Erreur : " + error.message);
   }
-  $("authD").close(); $("formD").showModal();
+  $("authD").close();
 };
 $("upBtn").onclick = async () => {
   authMsg("Création du compte…", true);
@@ -162,8 +256,8 @@ $("upBtn").onclick = async () => {
     options:{emailRedirectTo: location.origin}
   });
   if(error) return authMsg("Erreur : " + error.message);
-  if(!data.session) return authMsg("Compte créé. Clique sur le lien reçu par email (vérifie les spams), puis reviens ici pour publier.", true);
-  $("authD").close(); $("formD").showModal();
+  if(!data.session) return authMsg("Compte créé. Clique sur le lien reçu par email (vérifie les spams), puis reviens ici.", true);
+  $("authD").close();
 };
 
 /* Publication */
@@ -201,7 +295,7 @@ $("pubForm").addEventListener("submit", async e => {
   }
 });
 
-$("q").addEventListener("input", render);
+["q","loc","pmin","pmax"].forEach(id => $(id).addEventListener("input", render));
 $("cat").addEventListener("change", render);
 loadAll();
 </script>
