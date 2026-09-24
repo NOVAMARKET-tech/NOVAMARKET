@@ -6,6 +6,7 @@
 <title>NOVAMARKET – Petites annonces au Bénin</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{--bg:#f2f5f3;--ink:#10291f;--muted:#5b6b63;--card:#fff;--line:#d9e1dc;--accent:#f5b800;--green:#0c6b45}
 *{box-sizing:border-box}
@@ -15,8 +16,11 @@ header{background:var(--ink);color:#fff;padding:32px 20px 28px}
 h1{margin:0;font-size:clamp(2rem,7vw,3.2rem);font-weight:800;letter-spacing:-.02em}
 header p{margin:6px 0 0;color:#b9cbc2}
 .bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}
-input,select{font:inherit;padding:11px 14px;border-radius:10px;border:0;flex:1 1 180px;min-width:0}
-.publish{font:inherit;font-weight:600;background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+input,select,textarea{font:inherit;padding:11px 14px;border-radius:10px;border:0;min-width:0}
+.bar input,.bar select{flex:1 1 180px}
+.publish,.btn{font:inherit;font-weight:600;background:var(--accent);color:var(--ink);border:0;border-radius:10px;padding:11px 20px;cursor:pointer}
+.alt{background:#e3ebe6}
+.out{background:transparent;color:#b9cbc2;border:1px solid #3d5a4d}
 main{padding:24px 20px 60px}
 #status{color:var(--muted);margin:0 0 16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
@@ -27,6 +31,16 @@ main{padding:24px 20px 60px}
 .price{font-weight:800;color:var(--green);font-size:1.1rem}
 .meta{color:var(--muted);font-size:.88rem}
 .wa{margin-top:auto;text-align:center;text-decoration:none;background:var(--green);color:#fff;border-radius:10px;padding:9px;font-weight:600}
+dialog{border:0;border-radius:16px;padding:22px;width:min(440px,92vw);color:var(--ink);font-family:inherit}
+dialog::backdrop{background:rgba(16,41,31,.6)}
+dialog h2{margin:0 0 4px}
+dialog input,dialog select,dialog textarea{width:100%;margin:6px 0;border:1px solid var(--line)}
+.row{display:flex;gap:8px;margin:8px 0}
+.row .btn{flex:1}
+.full{width:100%;margin-top:4px}
+.msg{color:#a33;min-height:1.2em;margin:4px 0;font-size:.9rem}
+.hint{color:var(--muted);margin:0 0 8px}
+.close{background:none;border:0;color:var(--muted);cursor:pointer;margin-top:8px;font:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 </style>
 </head>
@@ -37,40 +51,65 @@ main{padding:24px 20px 60px}
   <div class="bar">
     <input id="q" type="search" placeholder="Rechercher une annonce">
     <select id="cat"><option value="">Toutes les catégories</option></select>
-    <button class="publish" onclick="alert('Publier une annonce : bientôt disponible')">Publier une annonce</button>
+    <button class="publish" id="pubBtn">Publier une annonce</button>
+    <button class="publish out" id="outBtn" hidden>Se déconnecter</button>
   </div>
 </div></header>
 <main><div class="wrap">
   <p id="status">Chargement des annonces…</p>
   <div id="grid" class="grid"></div>
 </div></main>
+
+<dialog id="authD">
+  <h2>Connexion</h2>
+  <p class="hint">Connecte-toi pour publier une annonce.</p>
+  <input id="em" type="email" placeholder="Email" autocomplete="email">
+  <input id="pw" type="password" placeholder="Mot de passe (6 caractères minimum)" autocomplete="current-password">
+  <p id="authMsg" class="msg"></p>
+  <div class="row"><button class="btn" id="inBtn">Se connecter</button><button class="btn alt" id="upBtn">Créer un compte</button></div>
+  <button class="close" onclick="this.closest('dialog').close()">Fermer</button>
+</dialog>
+
+<dialog id="formD">
+  <h2>Publier une annonce</h2>
+  <form id="pubForm">
+    <input id="fTitle" placeholder="Titre" required>
+    <select id="fCat" required></select>
+    <input id="fPrice" type="number" min="0" placeholder="Prix en FCFA" required>
+    <input id="fLoc" placeholder="Ville (ex : Cotonou)" required>
+    <input id="fWa" placeholder="Numéro WhatsApp (ex : 22901XXXXXXXX)" required>
+    <textarea id="fDesc" rows="3" placeholder="Description"></textarea>
+    <input id="fPhoto" type="file" accept="image/*">
+    <p id="fMsg" class="msg"></p>
+    <button class="btn full" type="submit">Publier</button>
+  </form>
+  <button class="close" onclick="this.closest('dialog').close()">Fermer</button>
+</dialog>
+
 <script>
 const SUPABASE_URL = "https://esshiqgxlbynyungbwfe.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVzc2hpcWd4bGJ5bnl1bmdid2ZlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyMzM2MDcsImV4cCI6MjEwNTgwOTYwN30.hcvIwcmKTiGzSeNWGkwuJam1-c-tl4zlLrvwOxokQ9E";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let all = [];
+let all = [], user = null;
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 
-async function api(path){
-  const r = await fetch(SUPABASE_URL + "/rest/v1/" + path, {
-    headers: { apikey: SUPABASE_ANON_KEY, Authorization: "Bearer " + SUPABASE_ANON_KEY }
-  });
-  if(!r.ok) throw new Error(r.status);
-  return r.json();
-}
-
-async function init(){
+async function loadAll(){
   try{
-    const [cats, list] = await Promise.all([
-      api("categories?select=id,name&order=name"),
-      api("listings?select=*,listing_images(image_url)&order=created_at.desc")
+    const [c, l] = await Promise.all([
+      sb.from("categories").select("id,name").order("name"),
+      sb.from("listings").select("*,listing_images(image_url)").order("created_at",{ascending:false})
     ]);
-    $("cat").innerHTML += cats.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join("");
-    all = list;
+    if(c.error) throw c.error;
+    if(l.error) throw l.error;
+    const opts = c.data.map(x => `<option value="${x.id}">${esc(x.name)}</option>`).join("");
+    $("cat").innerHTML = '<option value="">Toutes les catégories</option>' + opts;
+    $("fCat").innerHTML = opts;
+    all = l.data;
     render();
   }catch(e){
-    $("status").textContent = "Impossible de charger les annonces (erreur " + e.message + "). Vérifie la clé anon et les règles d'accès Supabase.";
+    $("status").textContent = "Impossible de charger les annonces : " + (e.message || e);
   }
 }
 
@@ -96,9 +135,75 @@ function render(){
   }).join("");
 }
 
+/* Connexion */
+sb.auth.onAuthStateChange((_e, session) => {
+  user = session?.user || null;
+  $("outBtn").hidden = !user;
+});
+sb.auth.getSession().then(({data}) => { user = data.session?.user || null; $("outBtn").hidden = !user; });
+
+const authMsg = (t, ok) => { $("authMsg").textContent = t; $("authMsg").style.color = ok ? "#0c6b45" : "#a33"; };
+$("pubBtn").onclick = () => user ? $("formD").showModal() : $("authD").showModal();
+$("outBtn").onclick = () => sb.auth.signOut();
+
+$("inBtn").onclick = async () => {
+  authMsg("Connexion…", true);
+  const {error} = await sb.auth.signInWithPassword({email:$("em").value.trim(), password:$("pw").value});
+  if(error){
+    if(/not confirmed/i.test(error.message)) return authMsg("Email pas encore confirmé. Clique sur le lien reçu par email.");
+    return authMsg("Erreur : " + error.message);
+  }
+  $("authD").close(); $("formD").showModal();
+};
+$("upBtn").onclick = async () => {
+  authMsg("Création du compte…", true);
+  const {data, error} = await sb.auth.signUp({
+    email:$("em").value.trim(), password:$("pw").value,
+    options:{emailRedirectTo: location.origin}
+  });
+  if(error) return authMsg("Erreur : " + error.message);
+  if(!data.session) return authMsg("Compte créé. Clique sur le lien reçu par email (vérifie les spams), puis reviens ici pour publier.", true);
+  $("authD").close(); $("formD").showModal();
+};
+
+/* Publication */
+$("pubForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("fMsg"); msg.textContent = "Publication en cours…";
+  try{
+    let url = null;
+    const file = $("fPhoto").files[0];
+    if(file){
+      const path = `${user.id}/${Date.now()}-${file.name.replace(/[^\w.]/g,"_")}`;
+      const up = await sb.storage.from("photos").upload(path, file);
+      if(up.error) throw up.error;
+      url = sb.storage.from("photos").getPublicUrl(path).data.publicUrl;
+    }
+    const {data, error} = await sb.from("listings").insert({
+      user_id: user.id,
+      category_id: Number($("fCat").value),
+      title: $("fTitle").value.trim(),
+      description: $("fDesc").value.trim(),
+      price: Number($("fPrice").value),
+      location: $("fLoc").value.trim(),
+      whatsapp: $("fWa").value.replace(/\D/g,"")
+    }).select().single();
+    if(error) throw error;
+    if(url){
+      const r = await sb.from("listing_images").insert({listing_id:data.id, image_url:url});
+      if(r.error) throw r.error;
+    }
+    e.target.reset(); msg.textContent = "";
+    $("formD").close();
+    await loadAll();
+  }catch(err){
+    msg.textContent = "Erreur : " + (err.message || err);
+  }
+});
+
 $("q").addEventListener("input", render);
 $("cat").addEventListener("change", render);
-init();
+loadAll();
 </script>
 </body>
 </html>
