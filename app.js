@@ -66,8 +66,9 @@ async function adPage(id) {
   if (!a) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; }
   const mine = user && user.id === a.user_id;
   app.innerHTML = `<div class="box"><div class="gal">${(a.photos || []).map(p => `<img src="${esc(p)}" alt="">`).join('')}</div>
-  <small>${esc(a.category)} · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2><div class="p" style="font-size:22px">${fcfa(a.price)}</div>
+  <small>${esc(a.category)} · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">Marque / Modèle : ${esc(a.brand)}</p>` : ''}<div class="p" style="font-size:22px">${fcfa(a.price)}</div>
   <p style="white-space:pre-wrap;margin-top:10px">${esc(a.description)}</p>
+  ${a.specs ? `<div class="box" style="background:var(--bg);box-shadow:none;margin:12px 0 0"><b>Caractéristiques</b><p style="white-space:pre-wrap;margin-top:6px">${esc(a.specs)}</p></div>` : ''}
   <div class="row"><a class="btn wa" target="_blank" rel="noopener" href="${wa(a.whatsapp, 'Bonjour, je suis intéressé par votre annonce NovaMarket : ' + a.title)}">Contacter sur WhatsApp</a>
   ${mine ? '' : '<button class="btn" id="msg">💬 Envoyer un message</button>'}${mine ? `<a class="btn alt" href="#/edit/${a.id}">Modifier</a><button class="btn red" id="del">Supprimer</button>` : ''}</div></div>`;
   if (!mine) $('#msg').onclick = () => startChat(a.id);
@@ -82,13 +83,15 @@ async function adPage(id) {
 
 async function form(id) {
   if (!user) { toast('Connectez-vous pour publier'); location.hash = '#/login'; return; }
-  let a = { title: '', description: '', price: '', category: CATS[0][0], city: '', whatsapp: user.user_metadata?.phone || '', photos: [] };
+  let a = { title: '', description: '', price: '', category: CATS[0][0], city: '', whatsapp: user.user_metadata?.phone || '', photos: [], brand: '', specs: '' };
   if (id) { const { data } = await db.from('ads').select('*').eq('id', id).single(); if (!data || data.user_id !== user.id) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; } a = data; }
   app.innerHTML = `<h2>${id ? 'Modifier' : 'Publier'} l'annonce</h2><div class="box"><form class="f" id="af">
   <label>Titre<input name="title" required minlength="3" maxlength="120" value="${esc(a.title)}"></label>
+  <label>Catégorie<select name="category">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
+  <label>Marque / Modèle (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>
+  <label>Caractéristiques (facultatif)<textarea name="specs" rows="4" placeholder="Ex : État neuf, couleur noir, 128 Go, garantie 6 mois...">${esc(a.specs)}</textarea><small>Une caractéristique par ligne, par exemple : État, couleur, taille, année, kilométrage...</small></label>
   <label>Description<textarea name="description" rows="5">${esc(a.description)}</textarea></label>
   <label>Prix (FCFA)<input name="price" type="number" min="0" value="${esc(a.price)}"></label>
-  <label>Catégorie<select name="category">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
   <label>Localisation<input name="city" required placeholder="Ex : Cotonou" value="${esc(a.city)}"></label>
   <label>Numéro WhatsApp<input name="whatsapp" required inputmode="tel" placeholder="0197392704" value="${esc(a.whatsapp)}"></label>
   ${a.photos.length ? `<label>Photos actuelles<div class="gal" id="cur">${a.photos.map((p, i) => `<span style="position:relative"><img src="${esc(p)}" style="height:100px;border-radius:10px"><button type="button" class="fav on" data-rm="${i}" style="position:absolute;right:4px;top:4px;width:26px;height:26px" aria-label="Retirer">×</button></span>`).join('')}</div><small>Cliquez sur × pour retirer une photo.</small></label>` : ''}
@@ -113,7 +116,7 @@ async function form(id) {
       if (error) { toast(error.message); $('#sb').disabled = false; return; }
       urls.push(db.storage.from('photos').getPublicUrl(path).data.publicUrl);
     }
-    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: fd.get('category'), city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls };
+    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: fd.get('category'), city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls, brand: fd.get('brand').trim() || null, specs: fd.get('specs').trim() || null };
     const r = id ? await db.from('ads').update(row).eq('id', id).select().single() : await db.from('ads').insert(row).select().single();
     if (r.error) { toast(r.error.message); $('#sb').disabled = false; return; }
     toast('Annonce enregistrée'); location.hash = '#/ad/' + r.data.id;
