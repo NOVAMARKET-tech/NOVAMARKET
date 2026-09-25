@@ -170,11 +170,20 @@ function services() {
   <div class="box"><b>Contact</b><p>WhatsApp : 0197392704<br>Téléphone : <a href="tel:0161209887">0161209887</a><br>Zone : Bénin</p></div>`;
 }
 
+function legalPage() {
+  app.innerHTML = `<h2>Mentions légales et confidentialité</h2>
+  <div class="box"><b>Éditeur du site</b><p>NovaMarket est une plateforme de petites annonces destinée au marché béninois.<br>Contact : WhatsApp 0197392704 · Téléphone <a href="tel:0161209887">0161209887</a> · Zone : Bénin, Agbato.</p></div>
+  <div class="box"><b>Rôle de la plateforme</b><p>NovaMarket met en relation des personnes souhaitant acheter, vendre ou échanger des biens et services. NovaMarket n'est ni vendeur ni acheteur : chaque annonce est publiée et gérée sous l'entière responsabilité de son auteur. Vérifiez toujours un bien avant de payer et privilégiez les remises en main propre.</p></div>
+  <div class="box"><b>Contenu autorisé</b><p>Les annonces doivent respecter la loi béninoise et ne pas concerner des biens ou services interdits, volés, contrefaits ou dangereux. NovaMarket se réserve le droit de retirer toute annonce non conforme.</p></div>
+  <div class="box"><b>Données personnelles</b><p>Lors de l'inscription, NovaMarket conserve votre nom, votre e-mail et votre numéro WhatsApp afin de faire fonctionner votre compte, vos annonces et la messagerie. Ces données sont hébergées chez Supabase et ne sont jamais vendues à des tiers. Votre numéro WhatsApp est visible par les personnes intéressées par vos annonces, car il sert au contact direct.</p></div>
+  <div class="box"><b>Photos</b><p>Les photos que vous ajoutez à une annonce sont stockées de façon sécurisée et restent visibles tant que l'annonce existe. Vous pouvez les retirer ou supprimer votre annonce à tout moment depuis votre profil.</p></div>
+  <div class="box"><b>Cookies</b><p>NovaMarket utilise uniquement les informations nécessaires à votre connexion (session). Aucun cookie publicitaire n'est utilisé.</p></div>`;
+}
 function route() {
   const [, p, id] = location.hash.slice(1).split('/'); scrollTo(0, 0); closeChat();
   if (p === 'ad') adPage(id); else if (p === 'new') form(); else if (p === 'edit') form(id);
   else if (p === 'login') login(); else if (p === 'profile') profile(); else if (p === 'favs') favsPage();
-  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else home();
+  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage(); else home();
 }
 window.addEventListener('hashchange', route);
 db.auth.onAuthStateChange(async (_e, s) => { const changed = (s?.user?.id || null) !== (user?.id || null); user = s?.user || null; if (changed) { await loadFavs(); nav(); route(); } });
