@@ -44,6 +44,8 @@ nav a:hover,nav button:hover{background:#e2ebe6}
 .cat.on{border-color:var(--g2);background:#fff}
 
 h2{margin:26px 0 14px;font-size:21px;letter-spacing:-.3px}
+.hd{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:26px 0 14px}
+.hd h2{margin:0}.hd a{font-size:13px;font-weight:700;color:var(--g2)}
 .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 .card{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.07);transition:transform .15s}
 .card:hover{transform:translateY(-2px)}
