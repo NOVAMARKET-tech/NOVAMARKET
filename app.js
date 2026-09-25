@@ -91,15 +91,22 @@ async function form(id) {
   <label>Catégorie<select name="category">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
   <label>Localisation<input name="city" required placeholder="Ex : Cotonou" value="${esc(a.city)}"></label>
   <label>Numéro WhatsApp<input name="whatsapp" required inputmode="tel" placeholder="0197392704" value="${esc(a.whatsapp)}"></label>
-  <label>Photos (6 max, 5 Mo chacune)<input name="files" type="file" accept="image/*" multiple></label>
-  ${a.photos.length ? `<small>${a.photos.length} photo(s) déjà enregistrée(s). Les nouvelles s'ajoutent.</small>` : ''}
+  ${a.photos.length ? `<label>Photos actuelles<div class="gal" id="cur">${a.photos.map((p, i) => `<span style="position:relative"><img src="${esc(p)}" style="height:100px;border-radius:10px"><button type="button" class="fav on" data-rm="${i}" style="position:absolute;right:4px;top:4px;width:26px;height:26px" aria-label="Retirer">×</button></span>`).join('')}</div><small>Cliquez sur × pour retirer une photo.</small></label>` : ''}
+  <label>${a.photos.length ? 'Ajouter des photos' : 'Photos'} (6 max au total, 5 Mo chacune)<input name="files" type="file" accept="image/*" multiple></label>
   <button class="btn" id="sb">${id ? 'Enregistrer' : 'Publier'}</button></form></div>`;
+  let kept = [...a.photos];
+  $('#cur')?.addEventListener('click', e => {
+    const b = e.target.closest('[data-rm]'); if (!b) return;
+    kept[+b.dataset.rm] = null; b.closest('span').remove();
+  });
   $('#af').onsubmit = async e => {
     e.preventDefault(); const fd = new FormData(e.target), files = [...fd.getAll('files')].filter(f => f.size);
-    if (files.length + a.photos.length > 6) return toast('6 photos maximum');
+    const remainKept = kept.filter(Boolean);
+    if (files.length + remainKept.length > 6) return toast('6 photos maximum');
     if (files.some(f => f.size > 5e6)) return toast('Chaque photo doit faire moins de 5 Mo');
+    if (files.length + remainKept.length === 0) return toast('Ajoutez au moins une photo');
     $('#sb').disabled = true; $('#sb').textContent = 'Envoi...';
-    const urls = [...a.photos];
+    const urls = [...remainKept];
     for (const [i, f] of files.entries()) {
       const path = `${user.id}/${Date.now()}-${i}-${f.name.replace(/[^\w.]/g, '_')}`;
       const { error } = await db.storage.from('photos').upload(path, f);
@@ -137,7 +144,20 @@ async function profile() {
   if (!user) { location.hash = '#/login'; return; }
   const { data } = await db.from('ads').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
   const m = user.user_metadata || {};
-  app.innerHTML = `<h2>Mon profil</h2><div class="box"><b>${esc(m.name || 'Utilisateur')}</b><br><small>${esc(user.email)} · ${esc(m.phone || '')}</small></div><h2>Mes annonces</h2><div class="grid">${grid(data || [])}</div>`;
+  app.innerHTML = `<h2>Mon profil</h2><div class="box"><form class="f" id="pf">
+  <label>Nom<input name="name" required value="${esc(m.name || '')}"></label>
+  <label>Numéro WhatsApp<input name="phone" inputmode="tel" placeholder="0197392704" value="${esc(m.phone || '')}"></label>
+  <small>E-mail : ${esc(user.email)} (non modifiable)</small>
+  <button class="btn" id="pb">Enregistrer</button></form></div>
+  <div class="row"><span class="box" style="margin:0;padding:12px 16px"><b>${(data || []).length}</b> annonce(s) publiée(s)</span><a class="btn alt" href="#/favs">♥ Voir mes favoris</a></div>
+  <h2>Mes annonces</h2><div class="grid">${grid(data || [])}</div>`;
+  $('#pf').onsubmit = async e => {
+    e.preventDefault(); const fd = new FormData(e.target);
+    $('#pb').disabled = true;
+    const r = await db.auth.updateUser({ data: { name: fd.get('name').trim(), phone: fd.get('phone').trim() } });
+    if (r.error) { toast(r.error.message); $('#pb').disabled = false; return; }
+    user = r.data.user; toast('Profil mis à jour'); profile();
+  };
 }
 async function favsPage() {
   if (!user) { location.hash = '#/login'; return; }
