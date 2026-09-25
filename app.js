@@ -13,6 +13,7 @@ const CAT_FIELDS = {
 };
 const ALL_EXTRA_FIELDS = [...new Set(Object.values(CAT_FIELDS).flat().map(f => f[0]))];
 const FIELD_LABELS = Object.fromEntries(Object.values(CAT_FIELDS).flat().map(f => [f[0], f[1]]));
+const BRAND_CATS = ['Téléphones', 'Informatique', 'Véhicules', 'Vêtements', 'Consoles et jeux'];
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fcfa = n => n == null ? 'Prix à débattre' : Number(n).toLocaleString('fr-FR') + ' FCFA';
 const wa = (n, t = '') => { let d = String(n).replace(/\D/g, ''); if (!d.startsWith('229')) d = '229' + d; return 'https://wa.me/' + d + (t ? '?text=' + encodeURIComponent(t) : ''); };
@@ -53,15 +54,15 @@ async function home() {
   <input name="city" placeholder="Ville" value="${esc(F.city)}"><input name="min" type="number" min="0" placeholder="Prix min" value="${esc(F.min)}"><input name="max" type="number" min="0" placeholder="Prix max" value="${esc(F.max)}">
   <button class="btn alt" type="submit">Appliquer</button></div></details></form>
   </div></section>
-  <div class="cats-wrap"><div class="cats-box" id="catsBox">${CATS.map(c => `<button class="cat ${F.cat === c[0] ? 'on' : ''}" data-c="${c[0]}"><span>${c[1]}</span>${c[0]}</button>`).join('')}</div></div>
+  <div class="cats-wrap"><div class="cats-box" id="catsBox">${CATS.map(c => `<a class="cat ${F.cat === c[0] ? 'on' : ''}" href="#/categorie/${encodeURIComponent(c[0])}"><span>${c[1]}</span>${c[0]}</a>`).join('')}</div></div>
   <section class="svc-band"><div><h3>Nos services</h3><p>Pour vous faciliter la vie au quotidien</p></div>
   <div class="svc-item"><span>🚚</span><div><b>Livraison</b><small>Rapide et sécurisée</small></div></div>
   <div class="svc-item"><span>🧹</span><div><b>Nettoyage</b><small>Un espace propre, un esprit léger</small></div></div>
   <div class="svc-item"><span>👔</span><div><b>Pressing</b><small>Entre de bonnes mains</small></div></div>
   <div class="svc-contact"><span>💬 WhatsApp <b>0197392704</b></span><span>📍 Bénin</span></div></section>
-  <h2>Annonces récentes</h2><div class="grid" id="list"><p class="none">Chargement...</p></div>`;
+  <div class="hd"><h2>${F.cat ? `Catégorie : ${esc(F.cat)}` : 'Annonces récentes'}</h2>${F.cat ? '<a href="#/">✕ Toutes les catégories</a>' : ''}</div>
+  <div class="grid" id="list"><p class="none">Chargement...</p></div>`;
   $('#ff').onsubmit = e => { e.preventDefault(); F = Object.fromEntries(new FormData(e.target)); home(); };
-  document.querySelectorAll('.cat').forEach(b => b.onclick = () => { F.cat = F.cat === b.dataset.c ? '' : b.dataset.c; home(); });
   let q = db.from('ads').select('*').order('created_at', { ascending: false }).limit(60);
   const k = F.q.replace(/[,()%*]/g, ' ').trim();
   if (k) q = q.or(`title.ilike.%${k}%,description.ilike.%${k}%`);
@@ -72,13 +73,17 @@ async function home() {
   const { data, error } = await q;
   $('#list').innerHTML = error ? '<p class="none">Erreur de chargement. Vérifiez config.js.</p>' : grid(data);
 }
+function categoryPage(nameEncoded) {
+  F = { q: '', cat: decodeURIComponent(nameEncoded), city: '', min: '', max: '' };
+  home();
+}
 
 async function adPage(id) {
   const { data: a } = await db.from('ads').select('*').eq('id', id).single();
   if (!a) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; }
   const mine = user && user.id === a.user_id;
   app.innerHTML = `<div class="box"><div class="gal">${(a.photos || []).map(p => `<img src="${esc(p)}" alt="">`).join('')}</div>
-  <small>${esc(a.category)} · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">Marque / Modèle : ${esc(a.brand)}</p>` : ''}
+  <small><a href="#/categorie/${encodeURIComponent(a.category)}">${esc(a.category)}</a> · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">Marque / Modèle : ${esc(a.brand)}</p>` : ''}
   ${(() => { const l = (CAT_FIELDS[a.category] || []).filter(([n]) => a[n]).map(([n, label]) => `${label} : ${esc(a[n])}`); return l.length ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${l.join(' · ')}</p>` : ''; })()}
   <div class="p" style="font-size:22px">${fcfa(a.price)}</div>
   <p style="white-space:pre-wrap;margin-top:10px">${esc(a.description)}</p>
@@ -105,11 +110,12 @@ async function form(id) {
     if (type === 'number') return `<label>${label}<input name="${name}" type="number" min="0" value="${esc(val)}"></label>`;
     return `<label>${label}<input name="${name}" maxlength="60" placeholder="${esc(opt)}" value="${esc(val)}"></label>`;
   }).join('');
+  const brandHTML = cat => BRAND_CATS.includes(cat) ? `<label>Marque / Modèle (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>` : '';
   app.innerHTML = `<h2>${id ? 'Modifier' : 'Publier'} l'annonce</h2><div class="box"><form class="f" id="af">
   <label>Titre<input name="title" required minlength="3" maxlength="120" value="${esc(a.title)}"></label>
   <label>Catégorie<select name="category" id="catSel">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
   <div id="extra">${extraHTML(a.category)}</div>
-  <label>Marque / Modèle (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>
+  <div id="brandWrap">${brandHTML(a.category)}</div>
   <label>Autres caractéristiques (facultatif)<textarea name="specs" rows="4" placeholder="Ajoutez toute autre précision utile...">${esc(a.specs)}</textarea></label>
   <label>Description<textarea name="description" rows="5">${esc(a.description)}</textarea></label>
   <label>Prix (FCFA)<input name="price" type="number" min="0" value="${esc(a.price)}"></label>
@@ -118,7 +124,7 @@ async function form(id) {
   ${a.photos.length ? `<label>Photos actuelles<div class="gal" id="cur">${a.photos.map((p, i) => `<span style="position:relative"><img src="${esc(p)}" style="height:100px;border-radius:10px"><button type="button" class="fav on" data-rm="${i}" style="position:absolute;right:4px;top:4px;width:26px;height:26px" aria-label="Retirer">×</button></span>`).join('')}</div><small>Cliquez sur × pour retirer une photo.</small></label>` : ''}
   <label>${a.photos.length ? 'Ajouter des photos' : 'Photos'} (6 max au total, 5 Mo chacune)<input name="files" type="file" accept="image/*" multiple></label>
   <button class="btn" id="sb">${id ? 'Enregistrer' : 'Publier'}</button></form></div>`;
-  $('#catSel').onchange = e => { $('#extra').innerHTML = extraHTML(e.target.value); };
+  $('#catSel').onchange = e => { $('#extra').innerHTML = extraHTML(e.target.value); $('#brandWrap').innerHTML = brandHTML(e.target.value); };
   let kept = [...a.photos];
   $('#cur')?.addEventListener('click', e => {
     const b = e.target.closest('[data-rm]'); if (!b) return;
@@ -144,7 +150,7 @@ async function form(id) {
       const raw = (fd.get(name) || '').toString().trim();
       extraRow[name] = raw === '' ? null : (type === 'number' ? +raw : raw);
     });
-    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: cat, city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls, brand: fd.get('brand').trim() || null, specs: fd.get('specs').trim() || null, ...extraRow };
+    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: cat, city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls, brand: (fd.get('brand') || '').trim() || null, specs: fd.get('specs').trim() || null, ...extraRow };
     const r = id ? await db.from('ads').update(row).eq('id', id).select().single() : await db.from('ads').insert(row).select().single();
     if (r.error) { toast(r.error.message); $('#sb').disabled = false; return; }
     toast('Annonce enregistrée'); location.hash = '#/ad/' + r.data.id;
@@ -214,7 +220,7 @@ function route() {
   const [, p, id] = location.hash.slice(1).split('/'); scrollTo(0, 0); closeChat();
   if (p === 'ad') adPage(id); else if (p === 'new') form(); else if (p === 'edit') form(id);
   else if (p === 'login') login(); else if (p === 'profile') profile(); else if (p === 'favs') favsPage();
-  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage(); else home();
+  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage(); else if (p === 'categorie') categoryPage(id); else home();
 }
 window.addEventListener('hashchange', route);
 db.auth.onAuthStateChange(async (_e, s) => { const changed = (s?.user?.id || null) !== (user?.id || null); user = s?.user || null; if (changed) { await loadFavs(); nav(); route(); } });
