@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://novamarket-eight.vercel.app/sitemap.xml
