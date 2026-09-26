@@ -213,9 +213,10 @@ async function profile(section, sub) {
 }
 
 function profileMenu() {
+  const since = user.created_at ? new Date(user.created_at).toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' }) : null;
   app.innerHTML = `<h2>Mon profil</h2><div class="box" style="padding:14px 16px;display:flex;align-items:center;gap:12px">
   <div style="width:44px;height:44px;border-radius:50%;background:var(--g);color:#fff;display:grid;place-items:center;font-weight:700;font-size:18px">${esc((user.user_metadata?.name || user.email)[0].toUpperCase())}</div>
-  <div><b>${esc(user.user_metadata?.name || 'Utilisateur')}</b><br><small>${esc(user.email)}</small></div></div>
+  <div><b>${esc(user.user_metadata?.name || 'Utilisateur')}</b><br><small>${esc(user.email)}</small>${since ? `<br><small style="color:var(--mute)">Membre depuis ${since}</small>` : ''}</div></div>
   <div class="slist">${SETTINGS_MENU.map(m => `<a class="srow ${m.key === 'deconnexion' ? 'danger' : ''}" href="#/profile/${m.key}"><span class="ic">${m.icon}</span><span class="lb">${m.label}</span><span class="chev">›</span></a>`).join('')}</div>`;
 }
 
