@@ -63,10 +63,10 @@ h2{margin:26px 0 14px;font-size:21px;letter-spacing:-.3px}
 .svc-item span{font-size:26px}.svc-item b{display:block;font-size:14px}.svc-item small{opacity:.85;color:#fff}
 .svc-contact{margin-left:auto;display:flex;flex-direction:column;gap:5px;font-size:13px}.svc-contact b{font-size:14px}
 
-.box{background:#fff;border-radius:16px;padding:18px;box-shadow:0 3px 12px rgba(0,0,0,.07);margin-bottom:14px}
+.box{background:var(--card);color:var(--ink);border-radius:16px;padding:18px;box-shadow:0 3px 12px rgba(0,0,0,.07);margin-bottom:14px}
 form.f{display:grid;gap:10px;max-width:560px}
 form.f label{font-weight:600;font-size:14px;display:grid;gap:4px}
-form.f input,form.f select,form.f textarea{padding:12px;border:1px solid var(--line);border-radius:12px;background:#fff}
+form.f input,form.f select,form.f textarea{padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}
 .gal{display:flex;gap:8px;overflow-x:auto;margin-bottom:12px}.gal img{height:260px;max-width:90%;border-radius:14px;object-fit:cover}
 .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .svc{display:grid;gap:12px}.svc .box b{font-size:18px}
@@ -80,6 +80,41 @@ form.f input,form.f select,form.f textarea{padding:12px;border:1px solid var(--l
 .none{padding:30px;text-align:center;color:var(--mute);grid-column:1/-1}
 footer{text-align:center;color:var(--mute);font-size:13px;padding:26px 14px}
 #toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;z-index:30}
+
+/* ---- Thème sombre ---- */
+:root[data-theme="dark"]{--g:#12a874;--g2:#2fd08a;--mint:#2fd08a;--ink:#eef2f0;--mute:#a9b6b0;--bg:#0e1512;--line:#26332d;--card:#182019}
+:root[data-theme="dark"] body{background:var(--bg)}
+:root[data-theme="dark"] header{background:var(--card);border-color:var(--line)}
+:root[data-theme="dark"] .search input{color:#0e1512}
+:root[data-theme="dark"] .more-grid select,:root[data-theme="dark"] .more-grid input{color:#0e1512}
+:root[data-theme="dark"] .fav{background:rgba(255,255,255,.15)}
+
+/* ---- Menu de réglages (Mon profil) ---- */
+.back{display:inline-block;margin-bottom:12px;font-size:13px;font-weight:700;color:var(--g2)}
+.slist{background:var(--card);border-radius:16px;overflow:hidden;box-shadow:0 3px 12px rgba(0,0,0,.07)}
+.srow{display:flex;align-items:center;gap:12px;padding:15px 16px;border-bottom:1px solid var(--line);cursor:pointer;background:none;border-left:0;border-right:0;border-top:0;width:100%;text-align:left;font:inherit;color:inherit}
+.srow:last-child{border-bottom:0}
+.srow .ic{font-size:20px;width:26px;text-align:center;flex:none}
+.srow .lb{flex:1;font-weight:600;font-size:14.5px}
+.srow .sub{display:block;font-weight:400;font-size:12px;color:var(--mute);margin-top:2px}
+.srow .chev{color:var(--mute);font-size:18px}
+.srow.danger .lb{color:#a4302b}
+.toggle-row{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;padding:14px 0;border-bottom:1px solid var(--line)}
+.toggle-row:last-child{border-bottom:0}
+.toggle-row b{font-size:14px;display:block}.toggle-row p{font-size:12.5px;color:var(--mute);margin-top:3px}
+.switch{position:relative;flex:none;width:46px;height:26px}
+.switch input{opacity:0;width:0;height:0}
+.switch span{position:absolute;inset:0;background:var(--line);border-radius:999px;transition:.2s;cursor:pointer}
+.switch span::before{content:"";position:absolute;left:3px;top:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:.2s}
+.switch input:checked+span{background:var(--g2)}
+.switch input:checked+span::before{transform:translateX(20px)}
+.switch input:disabled+span{opacity:.4;cursor:not-allowed}
+.seg{display:flex;gap:8px;flex-wrap:wrap}
+.seg button{flex:1;min-width:90px;padding:12px;border-radius:12px;border:2px solid var(--line);background:var(--card);font-weight:700;font-size:13px;cursor:pointer;color:inherit}
+.seg button.on{border-color:var(--g2);background:var(--g);color:#fff}
+.faq-item{border-bottom:1px solid var(--line);padding:12px 0}
+.faq-item summary{font-weight:600;cursor:pointer;font-size:14px}
+.faq-item p{margin-top:8px;color:var(--mute);font-size:13.5px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(3,1fr)}.more-grid{grid-template-columns:repeat(4,1fr) auto}.svc{grid-template-columns:repeat(3,1fr)}}
 @media(min-width:1000px){.grid{grid-template-columns:repeat(5,1fr)}.ph{height:150px}.cat{min-width:104px}}
 @media(max-width:520px){
