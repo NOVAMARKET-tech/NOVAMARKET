@@ -55,10 +55,13 @@ async function home() {
   <input name="city" placeholder="Ville" value="${esc(F.city)}"><input name="min" type="number" min="0" placeholder="Prix min" value="${esc(F.min)}"><input name="max" type="number" min="0" placeholder="Prix max" value="${esc(F.max)}">
   <button class="btn alt" type="submit">Appliquer</button></div></details></form>
   </div></section>
-  <div class="cats-wrap"><div class="cats-box" id="catsBox">${CATS.map(c => `<a class="cat ${F.cat === c[0] ? 'on' : ''}" href="#/categorie/${encodeURIComponent(c[0])}"><span>${c[1]}</span>${c[0]}</a>`).join('')}</div></div>
+  <div class="cats-wrap"><div class="cats-box" id="catsBox"><div class="cats-track">${CATS.concat(CATS).map(c => `<a class="cat ${F.cat === c[0] ? 'on' : ''}" href="#/categorie/${encodeURIComponent(c[0])}"><span>${c[1]}</span>${c[0]}</a>`).join('')}</div></div></div>
   <div class="hd"><h2>${F.cat ? `Catégorie : ${esc(F.cat)}` : 'Annonces récentes'}</h2>${F.cat ? '<a href="#/">✕ Toutes les catégories</a>' : ''}</div>
   <div class="grid" id="list"><p class="none">Chargement...</p></div>`;
   $('#ff').onsubmit = e => { e.preventDefault(); F = Object.fromEntries(new FormData(e.target)); home(); };
+  const cb = $('#catsBox');
+  cb.addEventListener('touchstart', () => cb.classList.add('paused'), { passive: true });
+  cb.addEventListener('touchend', () => setTimeout(() => cb.classList.remove('paused'), 1500), { passive: true });
   let q = db.from('ads').select('*').order('created_at', { ascending: false }).limit(60);
   const k = F.q.replace(/[,()%*]/g, ' ').trim();
   if (k) q = q.or(`title.ilike.%${k}%,description.ilike.%${k}%`);
