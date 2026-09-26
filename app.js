@@ -178,24 +178,60 @@ function login() {
   draw();
 }
 
-async function profile() {
+const PTABS = [['compte', '👤 Mon compte'], ['annonces', '📦 Mes annonces'], ['wallet', '💰 Porte-monnaie'], ['tx', '🧾 Transactions'], ['svc', '⚙️ Nos services']];
+async function profile(tab) {
   if (!user) { location.hash = '#/login'; return; }
-  const { data } = await db.from('ads').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+  tab = tab || 'compte';
   const m = user.user_metadata || {};
-  app.innerHTML = `<h2>Mon profil</h2><div class="box"><form class="f" id="pf">
-  <label>Nom<input name="name" required value="${esc(m.name || '')}"></label>
-  <label>Numéro WhatsApp<input name="phone" inputmode="tel" placeholder="0197392704" value="${esc(m.phone || '')}"></label>
-  <small>E-mail : ${esc(user.email)} (non modifiable)</small>
-  <button class="btn" id="pb">Enregistrer</button></form></div>
-  <div class="row"><span class="box" style="margin:0;padding:12px 16px"><b>${(data || []).length}</b> annonce(s) publiée(s)</span><a class="btn alt" href="#/favs">♥ Voir mes favoris</a></div>
-  <h2>Mes annonces</h2><div class="grid">${grid(data || [])}</div>`;
-  $('#pf').onsubmit = async e => {
-    e.preventDefault(); const fd = new FormData(e.target);
-    $('#pb').disabled = true;
-    const r = await db.auth.updateUser({ data: { name: fd.get('name').trim(), phone: fd.get('phone').trim() } });
-    if (r.error) { toast(r.error.message); $('#pb').disabled = false; return; }
-    user = r.data.user; toast('Profil mis à jour'); profile();
-  };
+  app.innerHTML = `<h2>Mon profil</h2>
+  <nav style="padding:0 0 14px;margin:0" id="ptabs">${PTABS.map(t => `<button class="${tab === t[0] ? 'on' : ''}" data-t="${t[0]}" style="${tab === t[0] ? 'background:var(--g);color:#fff' : ''}">${t[1]}</button>`).join('')}</nav>
+  <div id="ptab"><p class="none">Chargement...</p></div>`;
+  $('#ptabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) profile(b.dataset.t); });
+  const box = $('#ptab');
+
+  if (tab === 'compte') {
+    box.innerHTML = `<div class="box"><form class="f" id="pf">
+    <label>Nom<input name="name" required value="${esc(m.name || '')}"></label>
+    <label>Numéro WhatsApp<input name="phone" inputmode="tel" placeholder="0197392704" value="${esc(m.phone || '')}"></label>
+    <small>E-mail : ${esc(user.email)} (non modifiable)</small>
+    <button class="btn" id="pb">Enregistrer</button></form></div>
+    <div class="row"><a class="btn alt" href="#/favs">♥ Voir mes favoris</a></div>`;
+    $('#pf').onsubmit = async e => {
+      e.preventDefault(); const fd = new FormData(e.target);
+      $('#pb').disabled = true;
+      const r = await db.auth.updateUser({ data: { name: fd.get('name').trim(), phone: fd.get('phone').trim() } });
+      if (r.error) { toast(r.error.message); $('#pb').disabled = false; return; }
+      user = r.data.user; toast('Profil mis à jour'); profile('compte');
+    };
+  }
+
+  else if (tab === 'annonces') {
+    const { data } = await db.from('ads').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    box.innerHTML = `<div class="box" style="margin:0 0 14px;padding:12px 16px"><b>${(data || []).length}</b> annonce(s) publiée(s)</div><div class="grid">${grid(data || [])}</div>`;
+  }
+
+  else if (tab === 'wallet') {
+    let { data: w } = await db.from('wallets').select('balance').eq('user_id', user.id).maybeSingle();
+    if (!w) { await db.from('wallets').insert({ user_id: user.id, balance: 0 }); w = { balance: 0 }; }
+    box.innerHTML = `<div class="box" style="text-align:center;padding:30px 16px">
+    <small>Solde disponible</small><div style="font-size:36px;font-weight:800;color:var(--g2);margin:6px 0">${fcfa(w.balance)}</div>
+    <p style="color:var(--mute);font-size:13px;max-width:420px;margin:10px auto 0">Le paiement en ligne (Mobile Money) n'est pas encore branché. Cette section affiche votre solde réel une fois le paiement sécurisé activé — aucun montant ne peut être ajouté ici pour l'instant.</p>
+    </div>`;
+  }
+
+  else if (tab === 'tx') {
+    const { data: t } = await db.from('wallet_transactions').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    box.innerHTML = (t && t.length) ? t.map(x => `<div class="box" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div><b>${esc(x.description || (x.type === 'credit' ? 'Crédit' : 'Débit'))}</b><br><small>${hm(x.created_at)}</small></div><b style="color:${x.amount >= 0 ? 'var(--g2)' : '#a4302b'}">${x.amount >= 0 ? '+' : ''}${fcfa(x.amount)}</b></div>`).join('') : '<p class="none">Aucune transaction pour le moment.</p>';
+  }
+
+  else if (tab === 'svc') {
+    box.innerHTML = `<div class="svc">
+    <div class="box"><span style="font-size:34px">🚚</span><br><b>Livraison</b><p>Rapide et sécurisée</p><a class="btn wa" target="_blank" rel="noopener" href="${wa('0197392704', 'Bonjour, je souhaite le service : Livraison')}">Demander sur WhatsApp</a></div>
+    <div class="box"><span style="font-size:34px">🧹</span><br><b>Nettoyage</b><p>Un espace propre, un esprit léger</p><a class="btn wa" target="_blank" rel="noopener" href="${wa('0197392704', 'Bonjour, je souhaite le service : Nettoyage')}">Demander sur WhatsApp</a></div>
+    <div class="box"><span style="font-size:34px">👔</span><br><b>Pressing</b><p>Vos vêtements entre de bonnes mains</p><a class="btn wa" target="_blank" rel="noopener" href="${wa('0197392704', 'Bonjour, je souhaite le service : Pressing')}">Demander sur WhatsApp</a></div>
+    </div>`;
+  }
+}
 }
 async function favsPage() {
   if (!user) { location.hash = '#/login'; return; }
