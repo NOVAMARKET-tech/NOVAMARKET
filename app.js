@@ -13,7 +13,8 @@ const CAT_FIELDS = {
 };
 const ALL_EXTRA_FIELDS = [...new Set(Object.values(CAT_FIELDS).flat().map(f => f[0]))];
 const FIELD_LABELS = Object.fromEntries(Object.values(CAT_FIELDS).flat().map(f => [f[0], f[1]]));
-const BRAND_LABELS = { 'Véhicules': 'Marque', 'Informatique': 'Marque', 'Consoles et jeux': 'Marque', 'Vêtements': 'Modèle' };
+const BRAND_LABELS = { 'Téléphones': 'Marque', 'Véhicules': 'Marque', 'Informatique': 'Marque', 'Consoles et jeux': 'Marque', 'Vêtements': 'Modèle' };
+const BRAND_PLACEHOLDERS = { 'Téléphones': 'Ex : Samsung, Apple, Tecno, Infinix...', 'Véhicules': 'Ex : Toyota, Peugeot, Renault...', 'Informatique': 'Ex : HP, Dell, Lenovo, Apple...', 'Consoles et jeux': 'Ex : Sony, Microsoft, Nintendo...', 'Vêtements': 'Ex : Robe longue, chemise slim...' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fcfa = n => n == null ? 'Prix à débattre' : Number(n).toLocaleString('fr-FR') + ' FCFA';
 const wa = (n, t = '') => { let d = String(n).replace(/\D/g, ''); if (!d.startsWith('229')) d = '229' + d; return 'https://wa.me/' + d + (t ? '?text=' + encodeURIComponent(t) : ''); };
@@ -110,7 +111,7 @@ async function form(id) {
     if (type === 'number') return `<label>${label}<input name="${name}" type="number" min="0" value="${esc(val)}"></label>`;
     return `<label>${label}<input name="${name}" maxlength="60" placeholder="${esc(opt)}" value="${esc(val)}"></label>`;
   }).join('');
-  const brandHTML = cat => BRAND_LABELS[cat] ? `<label>${BRAND_LABELS[cat]} (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>` : '';
+  const brandHTML = cat => BRAND_LABELS[cat] ? `<label>${BRAND_LABELS[cat]} (facultatif)<input name="brand" maxlength="80" placeholder="${esc(BRAND_PLACEHOLDERS[cat] || '')}" value="${esc(a.brand)}"></label>` : '';
   app.innerHTML = `<h2>${id ? 'Modifier' : 'Publier'} l'annonce</h2><div class="box"><form class="f" id="af">
   <label>Titre<input name="title" required minlength="3" maxlength="120" value="${esc(a.title)}"></label>
   <label>Catégorie<select name="category" id="catSel">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
