@@ -232,7 +232,6 @@ async function profile(tab) {
     </div>`;
   }
 }
-}
 async function favsPage() {
   if (!user) { location.hash = '#/login'; return; }
   const { data } = await db.from('favorites').select('ads(*)');
