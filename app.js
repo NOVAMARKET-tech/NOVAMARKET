@@ -5,7 +5,7 @@ const CAT_FIELDS = {
   'Téléphones': [['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']], ['storage_capacity', 'Stockage', 'text', 'Ex : 64 Go, 128 Go, 256 Go...']],
   'Informatique': [['device_type', 'Type', 'select', ['Ordinateur portable', 'Ordinateur de bureau', 'Tablette', 'Accessoire']], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
   'Véhicules': [['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['gearbox', 'Boîte', 'select', ['Manuelle', 'Automatique']], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel', 'Électrique', 'Hybride']]],
-  'Immobilier': [['property_type', 'Type de bien', 'select', ['Appartement', 'Maison', 'Studio / Chambre', 'Terrain', 'Bureau / Commerce', 'Location vacances']], ['transaction_type', 'Transaction', 'select', ['Vente', 'Location']], ['furnished', 'Meublé ?', 'select', ['Meublé', 'Non meublé']], ['rooms', 'Nombre de chambres', 'number']],
+  'Immobilier': [['property_type', 'Type de bien', 'select', ['Appartement', 'Maison', 'Studio / Chambre', 'Terrain', 'Bureau / Commerce', 'Location vacances']], ['transaction_type', 'Transaction', 'select', ['Vente', 'Location']], ['furnished', 'Meublé ?', 'select', ['Meublé', 'Non meublé']], ['rooms', 'Nombre de chambres', 'number'], ['bathrooms', 'Nombre de douches / salles de bain', 'number'], ['area', 'Superficie / Dimensions', 'text', 'Ex : 150 m², 12m x 10m...']],
   'Maison': [['home_type', 'Type', 'select', ['Meuble', 'Électroménager', 'Décoration', 'Autre']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Vêtements': [['size', 'Taille', 'text', 'Ex : M, 42, Unique...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Consoles et jeux': [['platform', 'Plateforme', 'select', ['PS5', 'PS4', 'Xbox', 'Nintendo Switch', 'PC', 'Autre']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
@@ -13,7 +13,7 @@ const CAT_FIELDS = {
 };
 const ALL_EXTRA_FIELDS = [...new Set(Object.values(CAT_FIELDS).flat().map(f => f[0]))];
 const FIELD_LABELS = Object.fromEntries(Object.values(CAT_FIELDS).flat().map(f => [f[0], f[1]]));
-const BRAND_CATS = ['Téléphones', 'Informatique', 'Véhicules', 'Vêtements', 'Consoles et jeux'];
+const BRAND_LABELS = { 'Véhicules': 'Marque', 'Informatique': 'Marque', 'Consoles et jeux': 'Marque', 'Vêtements': 'Modèle' };
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fcfa = n => n == null ? 'Prix à débattre' : Number(n).toLocaleString('fr-FR') + ' FCFA';
 const wa = (n, t = '') => { let d = String(n).replace(/\D/g, ''); if (!d.startsWith('229')) d = '229' + d; return 'https://wa.me/' + d + (t ? '?text=' + encodeURIComponent(t) : ''); };
@@ -83,7 +83,7 @@ async function adPage(id) {
   if (!a) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; }
   const mine = user && user.id === a.user_id;
   app.innerHTML = `<div class="box"><div class="gal">${(a.photos || []).map(p => `<img src="${esc(p)}" alt="">`).join('')}</div>
-  <small><a href="#/categorie/${encodeURIComponent(a.category)}">${esc(a.category)}</a> · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">Marque / Modèle : ${esc(a.brand)}</p>` : ''}
+  <small><a href="#/categorie/${encodeURIComponent(a.category)}">${esc(a.category)}</a> · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${BRAND_LABELS[a.category] || 'Marque'} : ${esc(a.brand)}</p>` : ''}
   ${(() => { const l = (CAT_FIELDS[a.category] || []).filter(([n]) => a[n]).map(([n, label]) => `${label} : ${esc(a[n])}`); return l.length ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${l.join(' · ')}</p>` : ''; })()}
   <div class="p" style="font-size:22px">${fcfa(a.price)}</div>
   <p style="white-space:pre-wrap;margin-top:10px">${esc(a.description)}</p>
@@ -110,7 +110,7 @@ async function form(id) {
     if (type === 'number') return `<label>${label}<input name="${name}" type="number" min="0" value="${esc(val)}"></label>`;
     return `<label>${label}<input name="${name}" maxlength="60" placeholder="${esc(opt)}" value="${esc(val)}"></label>`;
   }).join('');
-  const brandHTML = cat => BRAND_CATS.includes(cat) ? `<label>Marque / Modèle (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>` : '';
+  const brandHTML = cat => BRAND_LABELS[cat] ? `<label>${BRAND_LABELS[cat]} (facultatif)<input name="brand" maxlength="80" placeholder="Ex : Samsung, Toyota, Nike..." value="${esc(a.brand)}"></label>` : '';
   app.innerHTML = `<h2>${id ? 'Modifier' : 'Publier'} l'annonce</h2><div class="box"><form class="f" id="af">
   <label>Titre<input name="title" required minlength="3" maxlength="120" value="${esc(a.title)}"></label>
   <label>Catégorie<select name="category" id="catSel">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
