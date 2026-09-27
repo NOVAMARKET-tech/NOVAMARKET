@@ -203,8 +203,11 @@ const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false;
 
 function nav() {
   $('#nav').innerHTML = user
-    ? '<a href="#/">Accueil</a><a href="#/chat">💬 Messages</a><a href="#/favs">♥ Favoris</a><a href="#/profile">👤 Mon profil</a>'
-    : '<a href="#/">Accueil</a><a href="#/login">👤 Se connecter</a>';
+    ? '<a href="#/">Accueil</a><a href="#/categories">📂 Catégories</a><a href="#/chat">💬 Messages</a><a href="#/favs">♥ Favoris</a><a href="#/profile">👤 Mon profil</a>'
+    : '<a href="#/">Accueil</a><a href="#/categories">📂 Catégories</a><a href="#/login">👤 Se connecter</a>';
+}
+function allCategoriesPage() {
+  app.innerHTML = `<h2>Catégories</h2><div class="slist">${CATS.map(c => `<a class="srow" href="#/categorie/${encodeURIComponent(c[0])}"><span class="ic">${c[1]}</span><span class="lb">${esc(c[0])}</span><span class="chev">›</span></a>`).join('')}</div>`;
 }
 async function loadFavs() {
   favs = new Set(); if (!user) return;
@@ -610,6 +613,7 @@ function route() {
   if (p === 'ad') adPage(id); else if (p === 'new') form(); else if (p === 'edit') form(id);
   else if (p === 'login') login(); else if (p === 'profile') profile(id, sub); else if (p === 'favs') favsPage();
   else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage();
+  else if (p === 'categories') allCategoriesPage();
   else if (p === 'categorie') {
     const cat = decodeURIComponent(id);
     if (!sub) treeBrowse(cat);
