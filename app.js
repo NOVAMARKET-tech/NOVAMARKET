@@ -1,32 +1,37 @@
-
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = s => document.querySelector(s), app = $('#app');
 const CATS = [["Véhicules","🚗"],["Matériel professionnel","🧰"],["Mode","👗"],["Famille","👶"],["Maison et jardin","🏡"],["Électronique","💻"],["Immobilier","🏠"],["Services","⚙️"],["Emploi","💼"],["Autres","🔷"]];
 const SUBCATS = {
-  'Véhicules': ['Autos', 'Motos', 'Vélos', 'Équipements pour autos', 'Équipements pour motos', 'Équipements pour vélos', 'Services de réparation mécanique'],
+  'Véhicules': ['Autos', 'Motos', 'Vélos', 'Caravaning', 'Utilitaires', 'Camions', 'Nautisme', 'Équipements pour autos', 'Équipements pour motos', 'Équipements pour vélos', 'Équipements pour caravaning', 'Équipements pour nautisme', 'Services de réparation mécanique'],
+  'Matériel professionnel': ['Tracteurs', 'Matériel agricole', 'BTP - Chantier gros-œuvre', 'Poids lourds', 'Manutention - Levage', 'Matériel médical', 'Équipements industriels', 'Équipements pour restaurants et hôtels', 'Équipements et fournitures de bureau', 'Équipements pour commerces et marchés'],
   'Mode': ['Vêtements', 'Chaussures', 'Montres et bijoux', 'Accessoires', 'Bagagerie'],
   'Famille': ['Équipements pour bébés et enfants', 'Vêtements pour bébés et enfants', 'Maternité', 'Chaussures pour enfants', 'Montres et bijoux pour enfants', 'Accessoires pour enfants', 'Bagagerie pour enfants', 'Baby-sitting'],
   'Maison et jardin': ['Ameublement', 'Papeterie et fournitures scolaires', 'Électroménager', 'Arts de la table', 'Décoration', 'Linge de maison', 'Bricolage', 'Jardin et plantes', 'Services de jardinage et de bricolage'],
   'Électronique': ['Ordinateurs', 'Accessoires informatiques', 'Tablettes et liseuses', 'Photo, audio et vidéo', 'Téléphones et objets connectés', 'Accessoires pour téléphones et objets connectés', 'Consoles et jeux vidéo'],
+  'Emploi': ['Intérim', 'CDI', 'CDD', 'Bénévolat', 'Autre (indépendant, apprentissage, stage...)', 'Formation professionnelle', 'Profil candidat'],
 };
 const CAT_FIELDS = {
-  'Matériel professionnel': [['brand', 'Marque', 'text', 'Ex : Bosch, Makita, Hyundai...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
-  'Immobilier': [['property_type', 'Type de bien', 'select', ['Appartement', 'Maison', 'Studio / Chambre', 'Terrain', 'Bureau / Commerce', 'Location vacances']], ['transaction_type', 'Transaction', 'select', ['Vente', 'Location']], ['furnished', 'Meublé ?', 'select', ['Meublé', 'Non meublé']], ['rooms', 'Nombre de chambres', 'number'], ['bathrooms', 'Nombre de douches / salles de bain', 'number'], ['area', 'Superficie / Dimensions', 'text', 'Ex : 150 m², 12m x 10m...']],
-  'Emploi': [['contract_type', 'Type de contrat', 'select', ['CDI', 'CDD', 'Stage', 'Temps partiel', 'Freelance']]]
+  'Immobilier': [['property_type', 'Type de bien', 'select', ['Appartement', 'Maison', 'Studio / Chambre', 'Terrain', 'Parking', 'Chambre', 'Colocation', 'Bureau / Commerce', 'Programmes logements neufs', 'Location vacances']], ['transaction_type', 'Transaction', 'select', ['Vente', 'Location']], ['furnished', 'Meublé ?', 'select', ['Meublé', 'Non meublé']], ['rooms', 'Nombre de chambres', 'number'], ['bathrooms', 'Nombre de douches / salles de bain', 'number'], ['area', 'Superficie / Dimensions', 'text', 'Ex : 150 m², 12m x 10m...']],
 };
 const SUBCAT_FIELDS = {
   'Autos': [['brand', 'Marque', 'text', 'Ex : Toyota, Peugeot, Renault...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['gearbox', 'Boîte', 'select', ['Manuelle', 'Automatique']], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel', 'Électrique', 'Hybride']]],
   'Motos': [['brand', 'Marque', 'text', 'Ex : Yamaha, Honda, Sanya...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number']],
   'Vélos': [['brand', 'Marque', 'text', 'Ex : VTT, BMX...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
+  'Caravaning': [['brand', 'Marque', 'text', 'Ex : Fiat, Hymer...'], ['year', 'Année', 'number'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Utilitaires': [['brand', 'Marque', 'text', 'Ex : Renault, Iveco, Toyota...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['gearbox', 'Boîte', 'select', ['Manuelle', 'Automatique']], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel', 'Électrique', 'Hybride']]],
+  'Camions': [['brand', 'Marque', 'text', 'Ex : Mercedes, Iveco, Man...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel']]],
+  'Nautisme': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Équipements pour autos': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Équipements pour motos': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Équipements pour vélos': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements pour caravaning': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements pour nautisme': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Services de réparation mécanique': [],
-  'Vêtements': [['size', 'Taille', 'text', 'Ex : M, 42, Unique...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Chaussures': [['size', 'Pointure', 'text', 'Ex : 42'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Montres et bijoux': [['brand', 'Marque', 'text', 'Ex : Casio, Fossil...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Accessoires': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Bagagerie': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Vêtements': [['size', 'Taille', 'text', 'Ex : M, 42, Unique...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Chaussures': [['size', 'Pointure', 'text', 'Ex : 42'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Montres et bijoux': [['brand', 'Marque', 'text', 'Ex : Casio, Fossil...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Accessoires': [['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Bagagerie': [['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Équipements pour bébés et enfants': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Vêtements pour bébés et enfants': [['size', 'Taille / Âge', 'text', 'Ex : 6 mois, 2 ans...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Maternité': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
@@ -44,6 +49,23 @@ const SUBCAT_FIELDS = {
   'Bricolage': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Jardin et plantes': [],
   'Services de jardinage et de bricolage': [],
+  'Tracteurs': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Matériel agricole': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'BTP - Chantier gros-œuvre': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Poids lourds': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Manutention - Levage': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Matériel médical': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements industriels': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements pour restaurants et hôtels': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements et fournitures de bureau': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipements pour commerces et marchés': [['brand', 'Marque', 'text'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Intérim': [['sector', 'Secteur d\u2019activité', 'text', 'Ex : Commerce, BTP, Informatique...'], ['experience', 'Expérience requise', 'select', ['Débutant accepté', '1 à 3 ans', '3 à 5 ans', '5 ans et plus']]],
+  'CDI': [['sector', 'Secteur d\u2019activité', 'text', 'Ex : Commerce, BTP, Informatique...'], ['experience', 'Expérience requise', 'select', ['Débutant accepté', '1 à 3 ans', '3 à 5 ans', '5 ans et plus']]],
+  'CDD': [['sector', 'Secteur d\u2019activité', 'text', 'Ex : Commerce, BTP, Informatique...'], ['experience', 'Expérience requise', 'select', ['Débutant accepté', '1 à 3 ans', '3 à 5 ans', '5 ans et plus']]],
+  'Bénévolat': [['sector', 'Secteur d\u2019activité', 'text', 'Ex : Commerce, BTP, Informatique...']],
+  'Autre (indépendant, apprentissage, stage...)': [['sector', 'Secteur d\u2019activité', 'text']],
+  'Formation professionnelle': [['sector', 'Domaine de la formation', 'text', 'Ex : Couture, Informatique, Langues...']],
+  'Profil candidat': [['sector', 'Secteur recherché', 'text'], ['experience', 'Expérience', 'select', ['Débutant', '1 à 3 ans', '3 à 5 ans', '5 ans et plus']]],
   'Ordinateurs': [['brand', 'Marque', 'text', 'Ex : HP, Dell, Apple...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']], ['storage_capacity', 'RAM / Stockage', 'text', 'Ex : 8 Go RAM, 256 Go SSD']],
   'Accessoires informatiques': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Tablettes et liseuses': [['brand', 'Marque', 'text', 'Ex : Samsung, Apple...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']], ['storage_capacity', 'Stockage', 'text', 'Ex : 64 Go']],
@@ -58,6 +80,125 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt
 const fcfa = n => n == null ? 'Prix à débattre' : Number(n).toLocaleString('fr-FR') + ' FCFA';
 const wa = (n, t = '') => { let d = String(n).replace(/\D/g, ''); if (!d.startsWith('229')) d = '229' + d; return 'https://wa.me/' + d + (t ? '?text=' + encodeURIComponent(t) : ''); };
 let user = null, favs = new Set(), F = { q: '', cat: '', city: '', min: '', max: '' };
+
+// Arbre centralisé : Catégorie > Sections > Éléments. Ajouter une sous-catégorie ici
+// suffit, sans toucher au reste du site (formulaire, recherche, favoris...).
+const CAR_BRANDS = ['Toyota', 'Peugeot', 'Renault', 'Mercedes', 'Volkswagen', 'Hyundai', 'Honda', 'Nissan', 'Kia', 'Ford', 'BMW', 'Audi', 'Mitsubishi', 'Suzuki', 'Chevrolet', 'Autre marque'];
+const MOTO_BRANDS = ['Yamaha', 'Honda', 'Sanya', 'Suzuki', 'Bajaj', 'TVS', 'Haojue', 'Kawasaki', 'Autre marque'];
+const GENDERS = ['Femme', 'Homme', 'Enfant', 'Unisexe'];
+const CATEGORY_TREE = {
+  'Véhicules': { icon: '🚗', sections: [
+    { label: 'Voitures', base: { subcategory: 'Autos' }, itemField: 'brand', preview: 6, items: CAR_BRANDS },
+    { label: 'Motos', base: { subcategory: 'Motos' }, itemField: 'brand', preview: 5, items: MOTO_BRANDS },
+    { label: 'Caravaning', base: { subcategory: 'Caravaning' }, direct: true },
+    { label: 'Utilitaires', base: { subcategory: 'Utilitaires' }, direct: true },
+    { label: 'Camions', base: { subcategory: 'Camions' }, direct: true },
+    { label: 'Nautisme', base: { subcategory: 'Nautisme' }, direct: true },
+    { label: 'Vélos', base: { subcategory: 'Vélos' }, direct: true },
+    { label: 'Équipement auto', base: { subcategory: 'Équipements pour autos' }, direct: true },
+    { label: 'Équipement moto', base: { subcategory: 'Équipements pour motos' }, direct: true },
+    { label: 'Équipement caravaning', base: { subcategory: 'Équipements pour caravaning' }, direct: true },
+    { label: 'Équipement nautisme', base: { subcategory: 'Équipements pour nautisme' }, direct: true },
+    { label: 'Équipements vélos', base: { subcategory: 'Équipements pour vélos' }, direct: true },
+    { label: 'Services de réparations mécaniques', base: { subcategory: 'Services de réparation mécanique' }, direct: true },
+  ]},
+  'Immobilier': { icon: '🏠', sections: [
+    { label: 'Ventes immobilières', base: { transaction_type: 'Vente' }, itemField: 'property_type', preview: 3, items: ['Appartement', 'Maison', 'Terrain', 'Bureau / Commerce', 'Chambre'] },
+    { label: 'Immobilier neuf', base: { transaction_type: 'Vente', property_type: 'Programmes logements neufs' }, direct: true },
+    { label: 'Locations', base: { transaction_type: 'Location' }, itemField: 'property_type', preview: 3, items: ['Appartement', 'Maison', 'Parking', 'Chambre', 'Colocation'] },
+    { label: 'Colocations', base: { transaction_type: 'Location', property_type: 'Colocation' }, direct: true },
+    { label: 'Bureaux & Commerces', base: { property_type: 'Bureau / Commerce' }, direct: true },
+    { label: 'Services de déménagement', base: { category: 'Services', q: 'déménagement' }, direct: true },
+  ]},
+  'Matériel professionnel': { icon: '🧰', sections: [
+    { label: 'Tout le matériel professionnel', itemField: 'subcategory', preview: 10, items: SUBCATS['Matériel professionnel'] },
+  ]},
+  'Emploi': { icon: '💼', sections: [
+    { label: 'Offres d\u2019emploi', itemField: 'subcategory', items: ['Intérim', 'CDI', 'CDD', 'Bénévolat', 'Autre (indépendant, apprentissage, stage...)'] },
+    { label: 'Formations professionnelles', base: { subcategory: 'Formation professionnelle' }, direct: true },
+    { label: 'Profil candidat', base: { subcategory: 'Profil candidat' }, direct: true },
+  ]},
+  'Mode': { icon: '👗', sections: [
+    { label: 'Vêtements', base: { subcategory: 'Vêtements' }, itemField: 'gender', items: GENDERS },
+    { label: 'Chaussures', base: { subcategory: 'Chaussures' }, itemField: 'gender', items: GENDERS },
+    { label: 'Montres & bijoux', base: { subcategory: 'Montres et bijoux' }, itemField: 'gender', items: GENDERS },
+    { label: 'Accessoires & bagagerie', itemField: 'subcategory', items: ['Accessoires', 'Bagagerie'] },
+  ]},
+  'Maison et jardin': { icon: '🏡', sections: [
+    { label: 'Ameublement', base: { subcategory: 'Ameublement' }, preview: 6, items: ['Armoire', 'Buffet', 'Canapé', 'Chaise, tabouret et banc', 'Fauteuil', 'Lit', 'Meuble de cuisine', 'Table de salle à manger'] },
+    { label: 'Papeterie & fournitures scolaires', base: { subcategory: 'Papeterie et fournitures scolaires' }, direct: true },
+    { label: 'Électroménager', base: { subcategory: 'Électroménager' }, items: ['Aspirateur', 'Congélateur', 'Four', 'Lave-linge', 'Lave-vaisselle', 'Micro-ondes', 'Réfrigérateur'] },
+    { label: 'Arts de la table', base: { subcategory: 'Arts de la table' }, items: ['Assiette', 'Service de vaisselle', 'Verre'] },
+    { label: 'Décoration', base: { subcategory: 'Décoration' }, preview: 6, items: ['Applique', 'Horloge, pendule et réveil', 'Lampadaire', 'Lampe à poser', 'Lustre', 'Miroir', 'Rideaux, voilage et store', 'Sculpture et statue', 'Suspension', 'Tableau et toile', 'Tapis', 'Vase, cache-pot et céramique'] },
+    { label: 'Linge de maison', base: { subcategory: 'Linge de maison' }, items: ['Équipement du lit', 'Déco textile', 'Linge de bain', 'Linge de lit', 'Linge de table', 'Autre'] },
+    { label: 'Bricolage', base: { subcategory: 'Bricolage' }, direct: true },
+    { label: 'Jardin & plantes', base: { subcategory: 'Jardin et plantes' }, direct: true },
+    { label: 'Services de jardinerie & bricolage', base: { subcategory: 'Services de jardinage et de bricolage' }, direct: true },
+  ]},
+  'Famille': { icon: '👶', sections: [
+    { label: 'Équipement bébé', base: { subcategory: 'Équipements pour bébés et enfants' }, items: ['Poussette', 'Siège auto'] },
+    { label: 'Mobilier enfant', base: { subcategory: 'Équipements pour bébés et enfants' }, items: ['Baignoire', 'Chaise haute', 'Lit bébé'] },
+    { label: 'Vêtements bébé et enfant', base: { subcategory: 'Vêtements pour bébés et enfants' }, preview: 6, items: ['0 à 3 mois', '3 à 6 mois', '6 à 9 mois', '9 à 12 mois', '12 à 18 mois', '18 à 24 mois', '2 à 4 ans', '4 à 6 ans'] },
+    { label: 'Maternité', base: { subcategory: 'Maternité' }, direct: true },
+    { label: 'Chaussures pour enfants', base: { subcategory: 'Chaussures pour enfants' }, direct: true },
+    { label: 'Montres et bijoux pour enfants', base: { subcategory: 'Montres et bijoux pour enfants' }, direct: true },
+    { label: 'Accessoires & bagagerie enfant', itemField: 'subcategory', items: ['Accessoires pour enfants', 'Bagagerie pour enfants'] },
+    { label: 'Baby-sitting', base: { subcategory: 'Baby-sitting' }, direct: true },
+  ]},
+  'Électronique': { icon: '💻', sections: [
+    { label: 'Informatique', itemField: 'subcategory', items: ['Ordinateurs', 'Accessoires informatiques', 'Tablettes et liseuses'] },
+    { label: 'Téléphonie', itemField: 'subcategory', items: ['Téléphones et objets connectés', 'Accessoires pour téléphones et objets connectés'] },
+    { label: 'Image, son & jeux vidéo', itemField: 'subcategory', items: ['Photo, audio et vidéo', 'Consoles et jeux vidéo'] },
+  ]},
+};
+const ILIKE_FIELDS = ['brand'];
+async function catResults(catLabel, filters, title) {
+  filters = filters || {};
+  app.innerHTML = `${back('#/categorie/' + encodeURIComponent(catLabel), catLabel)}<div class="hd"><h2>${esc(title)}</h2></div><div class="grid" id="list"><p class="none">Chargement...</p></div>`;
+  let q = db.from('ads').select('*').order('created_at', { ascending: false }).limit(60).eq('category', filters.category || catLabel);
+  Object.keys(filters).forEach(k => {
+    if (k === 'q' || k === 'category' || !filters[k]) return;
+    q = ILIKE_FIELDS.includes(k) ? q.ilike(k, '%' + String(filters[k]).replace(/[%*]/g, '') + '%') : q.eq(k, filters[k]);
+  });
+  if (filters.q) { const kw = filters.q.replace(/[,()%*]/g, ' ').trim(); if (kw) q = q.or(`title.ilike.%${kw}%,description.ilike.%${kw}%`); }
+  const { data, error } = await q;
+  $('#list').innerHTML = error ? '<p class="none">Erreur de chargement.</p>' : grid(data || []);
+}
+function treeBrowse(catLabel) {
+  const node = CATEGORY_TREE[catLabel];
+  if (!node) { categoryPage(encodeURIComponent(catLabel)); return; }
+  app.innerHTML = `${back('#/')}<h2>${node.icon} ${esc(catLabel)}</h2>
+  <a class="btn alt" style="display:inline-block;margin-bottom:6px" href="#/categorie/${encodeURIComponent(catLabel)}/tout">Tout ${esc(catLabel)}</a>
+  ${node.sections.map((sec, si) => {
+    if (sec.direct) return `<div class="tsec"><a class="srow" href="#/categorie/${encodeURIComponent(catLabel)}/d/${si}"><span class="lb">${esc(sec.label)}</span><span class="chev">›</span></a></div>`;
+    const items = sec.items || [];
+    const previewN = sec.preview || items.length;
+    const preview = items.slice(0, previewN);
+    return `<div class="tsec"><b class="tsec-title">${esc(sec.label)}</b><div class="tsec-items">
+    ${preview.map((it, ii) => `<a class="titem" href="#/categorie/${encodeURIComponent(catLabel)}/i/${si}/${ii}">${esc(it)}</a>`).join('')}
+    ${items.length > previewN ? `<a class="titem seeall" href="#/categorie/${encodeURIComponent(catLabel)}/s/${si}">Voir tout ›</a>` : ''}
+    </div></div>`;
+  }).join('')}`;
+}
+function treeSeeAll(catLabel, si) {
+  const node = CATEGORY_TREE[catLabel]; const sec = node?.sections?.[si];
+  if (!sec) { location.hash = '#/categorie/' + encodeURIComponent(catLabel); return; }
+  app.innerHTML = `${back('#/categorie/' + encodeURIComponent(catLabel), catLabel)}<h2>${esc(sec.label)}</h2>
+  <div class="slist">${sec.items.map((it, ii) => `<a class="srow" href="#/categorie/${encodeURIComponent(catLabel)}/i/${si}/${ii}"><span class="lb">${esc(it)}</span><span class="chev">›</span></a>`).join('')}</div>`;
+}
+function treeLeaf(catLabel, si, ii) {
+  const node = CATEGORY_TREE[catLabel]; const sec = node?.sections?.[si];
+  if (!sec) { location.hash = '#/categorie/' + encodeURIComponent(catLabel); return; }
+  const item = sec.items[ii];
+  const filters = { ...(sec.base || {}) };
+  if (sec.itemField) filters[sec.itemField] = item; else filters.q = item;
+  catResults(catLabel, filters, item);
+}
+function treeDirect(catLabel, si) {
+  const node = CATEGORY_TREE[catLabel]; const sec = node?.sections?.[si];
+  if (!sec) { location.hash = '#/categorie/' + encodeURIComponent(catLabel); return; }
+  catResults(catLabel, sec.base || {}, sec.label);
+}
 const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false; setTimeout(() => t.hidden = true, 3200); };
 
 function nav() {
@@ -464,11 +605,21 @@ function legalPage() {
   <div class="box"><b>Cookies</b><p>NovaMarket utilise uniquement les informations nécessaires à votre connexion (session). Aucun cookie publicitaire n'est utilisé.</p></div>`;
 }
 function route() {
-  const parts = location.hash.slice(1).split('/'); const p = parts[1], id = parts[2], sub = parts[3];
+  const parts = location.hash.slice(1).split('/'); const p = parts[1], id = parts[2], sub = parts[3], sub2 = parts[4];
   scrollTo(0, 0); closeChat();
   if (p === 'ad') adPage(id); else if (p === 'new') form(); else if (p === 'edit') form(id);
   else if (p === 'login') login(); else if (p === 'profile') profile(id, sub); else if (p === 'favs') favsPage();
-  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage(); else if (p === 'categorie') categoryPage(id); else home();
+  else if (p === 'chat') { id ? chatRoom(id) : chatList(); } else if (p === 'services') services(); else if (p === 'mentions') legalPage();
+  else if (p === 'categorie') {
+    const cat = decodeURIComponent(id);
+    if (!sub) treeBrowse(cat);
+    else if (sub === 'tout') categoryPage(id);
+    else if (sub === 's') treeSeeAll(cat, +sub2);
+    else if (sub === 'd') treeDirect(cat, +sub2);
+    else if (sub === 'i') treeLeaf(cat, +sub2, +parts[5]);
+    else treeBrowse(cat);
+  }
+  else home();
 }
 window.addEventListener('hashchange', route);
 db.auth.onAuthStateChange(async (_e, s) => { const changed = (s?.user?.id || null) !== (user?.id || null); user = s?.user || null; if (changed) { await loadFavs(); nav(); route(); } });
