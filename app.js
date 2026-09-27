@@ -1,20 +1,54 @@
+
 const db = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = s => document.querySelector(s), app = $('#app');
-const CATS = [["Téléphones","📱"],["Informatique","💻"],["Véhicules","🚗"],["Immobilier","🏠"],["Maison","🛋️"],["Vêtements","👕"],["Consoles et jeux","🎮"],["Services","⚙️"],["Emploi","💼"],["Autres","🔷"]];
+const CATS = [["Véhicules","🚗"],["Matériel professionnel","🧰"],["Mode","👗"],["Famille","👶"],["Maison et jardin","🏡"],["Électronique","💻"],["Immobilier","🏠"],["Services","⚙️"],["Emploi","💼"],["Autres","🔷"]];
+const SUBCATS = {
+  'Véhicules': ['Auto', 'Moto', 'Vélo', 'Équipement moto', 'Service de réparation mécanique'],
+  'Mode': ['Vêtements', 'Chaussures', 'Montres et bijoux', 'Accessoires et bagagerie'],
+  'Famille': ['Équipement bébés et enfants', 'Vêtements bébés et enfants', 'Maternité', 'Chaussures enfants', 'Montres et bijoux enfants', 'Accessoires et bagagerie enfants', 'Baby-sitting'],
+  'Maison et jardin': ['Ameublement', 'Papeterie et fourniture scolaire', 'Électroménagers', 'Arts de la table et décoration', 'Linge de maison', 'Bricolage', 'Jardin et plantes', 'Service de jardinage et bricolage'],
+  'Électronique': ['Ordinateurs', 'Accessoires informatique', 'Tablettes et liseuses', 'Photo, audio et vidéo', 'Téléphones et objets connectés', 'Accessoires téléphone et objets connectés', 'Consoles et jeux vidéo'],
+};
 const CAT_FIELDS = {
-  'Téléphones': [['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']], ['storage_capacity', 'Stockage', 'text', 'Ex : 64 Go, 128 Go, 256 Go...']],
-  'Informatique': [['device_type', 'Type', 'select', ['Ordinateur portable', 'Ordinateur de bureau', 'Tablette', 'Accessoire']], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
-  'Véhicules': [['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['gearbox', 'Boîte', 'select', ['Manuelle', 'Automatique']], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel', 'Électrique', 'Hybride']]],
+  'Matériel professionnel': [['brand', 'Marque', 'text', 'Ex : Bosch, Makita, Hyundai...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
   'Immobilier': [['property_type', 'Type de bien', 'select', ['Appartement', 'Maison', 'Studio / Chambre', 'Terrain', 'Bureau / Commerce', 'Location vacances']], ['transaction_type', 'Transaction', 'select', ['Vente', 'Location']], ['furnished', 'Meublé ?', 'select', ['Meublé', 'Non meublé']], ['rooms', 'Nombre de chambres', 'number'], ['bathrooms', 'Nombre de douches / salles de bain', 'number'], ['area', 'Superficie / Dimensions', 'text', 'Ex : 150 m², 12m x 10m...']],
-  'Maison': [['home_type', 'Type', 'select', ['Meuble', 'Électroménager', 'Décoration', 'Autre']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Vêtements': [['size', 'Taille', 'text', 'Ex : M, 42, Unique...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Enfant', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
-  'Consoles et jeux': [['platform', 'Plateforme', 'select', ['PS5', 'PS4', 'Xbox', 'Nintendo Switch', 'PC', 'Autre']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
   'Emploi': [['contract_type', 'Type de contrat', 'select', ['CDI', 'CDD', 'Stage', 'Temps partiel', 'Freelance']]]
 };
-const ALL_EXTRA_FIELDS = [...new Set(Object.values(CAT_FIELDS).flat().map(f => f[0]))];
-const FIELD_LABELS = Object.fromEntries(Object.values(CAT_FIELDS).flat().map(f => [f[0], f[1]]));
-const BRAND_LABELS = { 'Téléphones': 'Marque', 'Véhicules': 'Marque', 'Informatique': 'Marque', 'Consoles et jeux': 'Marque', 'Vêtements': 'Modèle' };
-const BRAND_PLACEHOLDERS = { 'Téléphones': 'Ex : Samsung, Apple, Tecno, Infinix...', 'Véhicules': 'Ex : Toyota, Peugeot, Renault...', 'Informatique': 'Ex : HP, Dell, Lenovo, Apple...', 'Consoles et jeux': 'Ex : Sony, Microsoft, Nintendo...', 'Vêtements': 'Ex : Robe longue, chemise slim...' };
+const SUBCAT_FIELDS = {
+  'Auto': [['brand', 'Marque', 'text', 'Ex : Toyota, Peugeot, Renault...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number'], ['gearbox', 'Boîte', 'select', ['Manuelle', 'Automatique']], ['fuel', 'Carburant', 'select', ['Essence', 'Diesel', 'Électrique', 'Hybride']]],
+  'Moto': [['brand', 'Marque', 'text', 'Ex : Yamaha, Honda, Sanya...'], ['year', 'Année', 'number'], ['mileage', 'Kilométrage (km)', 'number']],
+  'Vélo': [['brand', 'Marque', 'text', 'Ex : VTT, BMX...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']]],
+  'Équipement moto': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Service de réparation mécanique': [],
+  'Vêtements': [['size', 'Taille', 'text', 'Ex : M, 42, Unique...'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Chaussures': [['size', 'Pointure', 'text', 'Ex : 42'], ['gender', 'Pour', 'select', ['Homme', 'Femme', 'Unisexe']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Montres et bijoux': [['brand', 'Marque', 'text', 'Ex : Casio, Fossil...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Accessoires et bagagerie': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Équipement bébés et enfants': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Vêtements bébés et enfants': [['size', 'Taille / Âge', 'text', 'Ex : 6 mois, 2 ans...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Maternité': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Chaussures enfants': [['size', 'Pointure', 'text', 'Ex : 28'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Montres et bijoux enfants': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Accessoires et bagagerie enfants': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Baby-sitting': [],
+  'Ameublement': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Papeterie et fourniture scolaire': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Électroménagers': [['brand', 'Marque', 'text', 'Ex : Samsung, LG, Nasco...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Arts de la table et décoration': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Linge de maison': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Bricolage': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Jardin et plantes': [],
+  'Service de jardinage et bricolage': [],
+  'Ordinateurs': [['brand', 'Marque', 'text', 'Ex : HP, Dell, Apple...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']], ['storage_capacity', 'RAM / Stockage', 'text', 'Ex : 8 Go RAM, 256 Go SSD']],
+  'Accessoires informatique': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Tablettes et liseuses': [['brand', 'Marque', 'text', 'Ex : Samsung, Apple...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']], ['storage_capacity', 'Stockage', 'text', 'Ex : 64 Go']],
+  'Photo, audio et vidéo': [['brand', 'Marque', 'text', 'Ex : Canon, JBL, Sony...'], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Téléphones et objets connectés': [['brand', 'Marque', 'text', 'Ex : Samsung, Apple, Tecno...'], ['condition', 'État', 'select', ['Neuf', 'Très bon état', 'Bon état', 'À réparer']], ['storage_capacity', 'Stockage', 'text', 'Ex : 128 Go']],
+  'Accessoires téléphone et objets connectés': [['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+  'Consoles et jeux vidéo': [['platform', 'Plateforme', 'select', ['PS5', 'PS4', 'Xbox', 'Nintendo Switch', 'PC', 'Autre']], ['condition', 'État', 'select', ['Neuf', 'Occasion']]],
+};
+const ALL_EXTRA_FIELDS = [...new Set([...Object.values(CAT_FIELDS).flat(), ...Object.values(SUBCAT_FIELDS).flat()].map(f => f[0]))];
+const FIELD_LABELS = Object.fromEntries([...Object.values(CAT_FIELDS).flat(), ...Object.values(SUBCAT_FIELDS).flat()].map(f => [f[0], f[1]]));
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fcfa = n => n == null ? 'Prix à débattre' : Number(n).toLocaleString('fr-FR') + ' FCFA';
 const wa = (n, t = '') => { let d = String(n).replace(/\D/g, ''); if (!d.startsWith('229')) d = '229' + d; return 'https://wa.me/' + d + (t ? '?text=' + encodeURIComponent(t) : ''); };
@@ -82,8 +116,8 @@ async function adPage(id) {
   if (!a) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; }
   const mine = user && user.id === a.user_id;
   app.innerHTML = `<div class="box"><div class="gal">${(a.photos || []).map(p => `<img src="${esc(p)}" alt="">`).join('')}</div>
-  <small><a href="#/categorie/${encodeURIComponent(a.category)}">${esc(a.category)}</a> · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>${a.brand ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${BRAND_LABELS[a.category] || 'Marque'} : ${esc(a.brand)}</p>` : ''}
-  ${(() => { const l = (CAT_FIELDS[a.category] || []).filter(([n]) => a[n]).map(([n, label]) => `${label} : ${esc(a[n])}`); return l.length ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${l.join(' · ')}</p>` : ''; })()}
+  <small><a href="#/categorie/${encodeURIComponent(a.category)}">${esc(a.category)}</a>${a.subcategory ? ' · ' + esc(a.subcategory) : ''} · 📍 ${esc(a.city || 'Bénin')}</small><h2 style="margin:6px 0">${esc(a.title)}</h2>
+  ${(() => { const fields = SUBCATS[a.category] ? (SUBCAT_FIELDS[a.subcategory] || []) : (CAT_FIELDS[a.category] || []); const l = fields.filter(([n]) => a[n]).map(([n, label]) => `${label} : ${esc(a[n])}`); return l.length ? `<p style="font-weight:600;color:var(--mute);margin-bottom:4px">${l.join(' · ')}</p>` : ''; })()}
   <div class="p" style="font-size:22px">${fcfa(a.price)}</div>
   <p style="white-space:pre-wrap;margin-top:10px">${esc(a.description)}</p>
   ${a.specs ? `<div class="box" style="background:var(--bg);box-shadow:none;margin:12px 0 0"><b>Caractéristiques</b><p style="white-space:pre-wrap;margin-top:6px">${esc(a.specs)}</p></div>` : ''}
@@ -101,29 +135,38 @@ async function adPage(id) {
 
 async function form(id) {
   if (!user) { toast('Connectez-vous pour publier'); location.hash = '#/login'; return; }
-  let a = { title: '', description: '', price: '', category: CATS[0][0], city: '', whatsapp: user.user_metadata?.phone || '', photos: [], brand: '', specs: '' };
+  let a = { title: '', description: '', price: '', category: CATS[0][0], subcategory: '', city: '', whatsapp: user.user_metadata?.phone || '', photos: [], specs: '' };
   if (id) { const { data } = await db.from('ads').select('*').eq('id', id).single(); if (!data || data.user_id !== user.id) { app.innerHTML = '<p class="none">Annonce introuvable.</p>'; return; } a = data; }
-  const extraHTML = cat => (CAT_FIELDS[cat] || []).map(([name, label, type, opt]) => {
+  const fieldsHTML = fields => (fields || []).map(([name, label, type, opt]) => {
     const val = a[name] ?? '';
     if (type === 'select') return `<label>${label}<select name="${name}"><option value="">Non précisé</option>${opt.map(o => `<option ${val === o ? 'selected' : ''}>${o}</option>`).join('')}</select></label>`;
     if (type === 'number') return `<label>${label}<input name="${name}" type="number" min="0" value="${esc(val)}"></label>`;
     return `<label>${label}<input name="${name}" maxlength="60" placeholder="${esc(opt)}" value="${esc(val)}"></label>`;
   }).join('');
-  const brandHTML = cat => BRAND_LABELS[cat] ? `<label>${BRAND_LABELS[cat]} (facultatif)<input name="brand" maxlength="80" placeholder="${esc(BRAND_PLACEHOLDERS[cat] || '')}" value="${esc(a.brand)}"></label>` : '';
+  const extraHTML = (cat, subcat) => {
+    if (SUBCATS[cat]) {
+      const chosen = subcat || '';
+      return `<label>Sous-catégorie<select name="subcategory" id="subSel"><option value="">Choisir...</option>${SUBCATS[cat].map(s => `<option ${chosen === s ? 'selected' : ''}>${s}</option>`).join('')}</select></label>
+      <div id="subFields">${fieldsHTML(SUBCAT_FIELDS[chosen])}</div>`;
+    }
+    return fieldsHTML(CAT_FIELDS[cat]);
+  };
+  const photosHTML = `${a.photos.length ? `<label>Photos actuelles<div class="gal" id="cur">${a.photos.map((p, i) => `<span style="position:relative"><img src="${esc(p)}" style="height:100px;border-radius:10px"><button type="button" class="fav on" data-rm="${i}" style="position:absolute;right:4px;top:4px;width:26px;height:26px" aria-label="Retirer">×</button></span>`).join('')}</div><small>Cliquez sur × pour retirer une photo.</small></label>` : ''}
+  <label>${a.photos.length ? 'Ajouter des photos' : 'Photos'} (6 max au total, 5 Mo chacune)<input name="files" type="file" accept="image/*" multiple></label>`;
   app.innerHTML = `<h2>${id ? 'Modifier' : 'Publier'} l'annonce</h2><div class="box"><form class="f" id="af">
   <label>Titre<input name="title" required minlength="3" maxlength="120" value="${esc(a.title)}"></label>
   <label>Catégorie<select name="category" id="catSel">${CATS.map(c => `<option ${a.category === c[0] ? 'selected' : ''}>${c[0]}</option>`).join('')}</select></label>
-  <div id="extra">${extraHTML(a.category)}</div>
-  <div id="brandWrap">${brandHTML(a.category)}</div>
+  ${photosHTML}
+  <div id="extra">${extraHTML(a.category, a.subcategory)}</div>
   <label>Autres caractéristiques (facultatif)<textarea name="specs" rows="4" placeholder="Ajoutez toute autre précision utile...">${esc(a.specs)}</textarea></label>
   <label>Description<textarea name="description" rows="5">${esc(a.description)}</textarea></label>
   <label>Prix (FCFA)<input name="price" type="number" min="0" value="${esc(a.price)}"></label>
   <label>Localisation (ville)<input name="city" required placeholder="Ex : Cotonou" value="${esc(a.city)}"></label>
   <label>Numéro WhatsApp<input name="whatsapp" required inputmode="tel" placeholder="0197392704" value="${esc(a.whatsapp)}"></label>
-  ${a.photos.length ? `<label>Photos actuelles<div class="gal" id="cur">${a.photos.map((p, i) => `<span style="position:relative"><img src="${esc(p)}" style="height:100px;border-radius:10px"><button type="button" class="fav on" data-rm="${i}" style="position:absolute;right:4px;top:4px;width:26px;height:26px" aria-label="Retirer">×</button></span>`).join('')}</div><small>Cliquez sur × pour retirer une photo.</small></label>` : ''}
-  <label>${a.photos.length ? 'Ajouter des photos' : 'Photos'} (6 max au total, 5 Mo chacune)<input name="files" type="file" accept="image/*" multiple></label>
   <button class="btn" id="sb">${id ? 'Enregistrer' : 'Publier'}</button></form></div>`;
-  $('#catSel').onchange = e => { $('#extra').innerHTML = extraHTML(e.target.value); $('#brandWrap').innerHTML = brandHTML(e.target.value); };
+  const wireSub = () => { $('#subSel') && ($('#subSel').onchange = e => { $('#subFields').innerHTML = fieldsHTML(SUBCAT_FIELDS[e.target.value]); }); };
+  wireSub();
+  $('#catSel').onchange = e => { $('#extra').innerHTML = extraHTML(e.target.value, ''); wireSub(); };
   let kept = [...a.photos];
   $('#cur')?.addEventListener('click', e => {
     const b = e.target.closest('[data-rm]'); if (!b) return;
@@ -143,13 +186,14 @@ async function form(id) {
       if (error) { toast(error.message); $('#sb').disabled = false; return; }
       urls.push(db.storage.from('photos').getPublicUrl(path).data.publicUrl);
     }
-    const cat = fd.get('category'), fields = CAT_FIELDS[cat] || [];
+    const cat = fd.get('category'), subcat = fd.get('subcategory') || null;
+    const fields = SUBCATS[cat] ? (SUBCAT_FIELDS[subcat] || []) : (CAT_FIELDS[cat] || []);
     const extraRow = {}; ALL_EXTRA_FIELDS.forEach(n => extraRow[n] = null);
     fields.forEach(([name, , type]) => {
       const raw = (fd.get(name) || '').toString().trim();
       extraRow[name] = raw === '' ? null : (type === 'number' ? +raw : raw);
     });
-    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: cat, city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls, brand: (fd.get('brand') || '').trim() || null, specs: fd.get('specs').trim() || null, ...extraRow };
+    const row = { title: fd.get('title').trim(), description: fd.get('description').trim(), price: fd.get('price') === '' ? null : +fd.get('price'), category: cat, subcategory: SUBCATS[cat] ? subcat : null, city: fd.get('city').trim(), whatsapp: fd.get('whatsapp').trim(), photos: urls, specs: fd.get('specs').trim() || null, ...extraRow };
     const r = id ? await db.from('ads').update(row).eq('id', id).select().single() : await db.from('ads').insert(row).select().single();
     if (r.error) { toast(r.error.message); $('#sb').disabled = false; return; }
     toast('Annonce enregistrée'); location.hash = '#/ad/' + r.data.id;
