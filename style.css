@@ -59,6 +59,10 @@ h2{margin:26px 0 14px;font-size:21px;letter-spacing:-.3px}
 .fav{position:absolute;right:8px;top:8px;width:32px;height:32px;border-radius:50%;border:0;background:rgba(20,26,23,.55);color:#fff;cursor:pointer;font-size:14px}
 .fav.on{background:#d33b3b}
 .tx{padding:11px 13px 13px}.tx b{display:block;font-size:14px}.p{color:var(--g2);font-weight:700;margin:3px 0 6px;font-size:14px}small{color:var(--mute);font-size:12px}
+.cardfoot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.qa{display:flex;gap:6px;flex:none}
+.qbtn{width:34px;height:34px;border-radius:50%;border:0;background:var(--bg);font-size:16px;line-height:1;cursor:pointer;display:grid;place-items:center}
+.qbtn:active{background:var(--g2)}
 
 /* ---- SERVICES ---- */
 .svc-band{background:var(--g);color:#fff;border-radius:18px;padding:24px 22px;margin-top:26px;display:flex;flex-wrap:wrap;gap:20px 30px;align-items:center}
