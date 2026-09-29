@@ -203,8 +203,8 @@ const toast = m => { const t = $('#toast'); t.textContent = m; t.hidden = false;
 
 function nav() {
   $('#nav').innerHTML = user
-    ? '<a href="#/">Accueil</a><a href="#/categories">📂 Catégories</a><a href="#/chat">💬 Messages</a><a href="#/favs">♥ Favoris</a><a href="#/profile">👤 Mon profil</a>'
-    : '<a href="#/">Accueil</a><a href="#/categories">📂 Catégories</a><a href="#/login">👤 Se connecter</a>';
+    ? '<a href="#/">Accueil</a><a href="#/chat">💬 Messages</a><a href="#/favs">♥ Favoris</a><a href="#/profile">👤 Mon profil</a>'
+    : '<a href="#/">Accueil</a><a href="#/login">👤 Se connecter</a>';
 }
 function allCategoriesPage() {
   app.innerHTML = `<h2>Catégories</h2><div class="slist">${CATS.map(c => `<a class="srow" href="#/categorie/${encodeURIComponent(c[0])}"><span class="ic">${c[1]}</span><span class="lb">${esc(c[0])}</span><span class="chev">›</span></a>`).join('')}</div>`;
@@ -213,8 +213,15 @@ async function loadFavs() {
   favs = new Set(); if (!user) return;
   const { data } = await db.from('favorites').select('ad_id'); (data || []).forEach(r => favs.add(r.ad_id));
 }
-const card = a => `<a class="card" href="#/ad/${a.id}"><div class="ph">${a.photos?.[0] ? `<img src="${esc(a.photos[0])}" alt="" loading="lazy">` : '📦'}<em>${esc(a.category)}</em><button class="fav ${favs.has(a.id) ? 'on' : ''}" data-fav="${a.id}" aria-label="Favori">♥</button></div><div class="tx"><b>${esc(a.title)}</b><div class="p">${fcfa(a.price)}</div><small>📍 ${esc(a.city || 'Bénin')}</small></div></a>`;
+const card = a => `<a class="card" href="#/ad/${a.id}"><div class="ph">${a.photos?.[0] ? `<img src="${esc(a.photos[0])}" alt="" loading="lazy">` : '📦'}<em>${esc(a.category)}</em><button class="fav ${favs.has(a.id) ? 'on' : ''}" data-fav="${a.id}" aria-label="Favori">♥</button></div><div class="tx"><b>${esc(a.title)}</b><div class="p">${fcfa(a.price)}</div><div class="cardfoot"><small>📍 ${esc(a.city || 'Bénin')}</small><span class="qa"><button type="button" class="qbtn" data-call="${esc(String(a.whatsapp || '').replace(/\D/g, ''))}" aria-label="Appeler le vendeur">📞</button>${user && user.id === a.user_id ? '' : `<button type="button" class="qbtn" data-chat="${a.id}" aria-label="Contacter via le site">💬</button>`}</span></div></div></a>`;
 const grid = l => l.length ? l.map(card).join('') : '<p class="none">Aucune annonce trouvée.</p>';
+
+document.addEventListener('click', e => {
+  const c = e.target.closest('[data-call]');
+  if (c) { e.preventDefault(); e.stopPropagation(); if (c.dataset.call) location.href = 'tel:' + c.dataset.call; return; }
+  const m = e.target.closest('[data-chat]');
+  if (m) { e.preventDefault(); e.stopPropagation(); startChat(+m.dataset.chat); }
+});
 
 document.addEventListener('click', async e => {
   const b = e.target.closest('[data-fav]'); if (!b) return;
@@ -270,8 +277,8 @@ async function adPage(id) {
   <div class="p" style="font-size:22px">${fcfa(a.price)}</div>
   <p style="white-space:pre-wrap;margin-top:10px">${esc(a.description)}</p>
   ${a.specs ? `<div class="box" style="background:var(--bg);box-shadow:none;margin:12px 0 0"><b>Caractéristiques</b><p style="white-space:pre-wrap;margin-top:6px">${esc(a.specs)}</p></div>` : ''}
-  <div class="row"><a class="btn wa" target="_blank" rel="noopener" href="${wa(a.whatsapp, 'Bonjour, je suis intéressé par votre annonce NovaMarket : ' + a.title)}">Contacter sur WhatsApp</a>
-  ${mine ? '' : '<button class="btn" id="msg">💬 Envoyer un message</button>'}${mine ? `<a class="btn alt" href="#/edit/${a.id}">Modifier</a><button class="btn red" id="del">Supprimer</button>` : ''}</div></div>`;
+  <div class="row"><a class="btn call" href="tel:${esc(a.whatsapp.replace(/\D/g, ''))}" aria-label="Appeler">📞 Appeler</a>
+  ${mine ? '' : '<button class="btn call chat-ic" id="msg" aria-label="Contacter via le site">💬 Message</button>'}${mine ? `<a class="btn alt" href="#/edit/${a.id}">Modifier</a><button class="btn red" id="del">Supprimer</button>` : ''}</div></div>`;
   if (!mine) $('#msg').onclick = () => startChat(a.id);
   if (mine) $('#del').onclick = async () => {
     if (!confirm('Supprimer cette annonce ?')) return;
@@ -311,7 +318,7 @@ async function form(id) {
   <label>Description<textarea name="description" rows="5">${esc(a.description)}</textarea></label>
   <label>Prix (FCFA)<input name="price" type="number" min="0" value="${esc(a.price)}"></label>
   <label>Localisation (ville)<input name="city" required placeholder="Ex : Cotonou" value="${esc(a.city)}"></label>
-  <label>Numéro WhatsApp<input name="whatsapp" required inputmode="tel" placeholder="0197392704" value="${esc(a.whatsapp)}"></label>
+  <label>Numéro de téléphone<input name="whatsapp" required inputmode="tel" placeholder="Ex : 01 XX XX XX XX" value="${esc(a.whatsapp)}"></label>
   <button class="btn" id="sb">${id ? 'Enregistrer' : 'Publier'}</button></form></div>`;
   const wireSub = () => { $('#subSel') && ($('#subSel').onchange = e => { $('#subFields').innerHTML = fieldsHTML(SUBCAT_FIELDS[e.target.value]); }); };
   wireSub();
@@ -353,7 +360,7 @@ function login() {
   let signup = false;
   const draw = () => {
     app.innerHTML = `<h2>${signup ? 'Créer un compte' : 'Connexion'}</h2><div class="box"><form class="f" id="lf">
-    ${signup ? '<label>Nom<input name="name" required></label><label>Téléphone<input name="phone" inputmode="tel" placeholder="0197392704"></label>' : ''}
+    ${signup ? '<label>Nom<input name="name" required></label><label>Téléphone<input name="phone" inputmode="tel" placeholder="Ex : 01 XX XX XX XX"></label>' : ''}
     <label>E-mail<input name="email" type="email" required></label><label>Mot de passe<input name="pw" type="password" minlength="6" required></label>
     <button class="btn">${signup ? "S'inscrire" : 'Se connecter'}</button></form>
     <p class="row"><button class="btn alt" id="sw">${signup ? "J'ai déjà un compte" : 'Créer un compte'}</button></p></div>`;
@@ -432,7 +439,7 @@ async function profilePerso(sub) {
   if (sub === 'compte') {
     app.innerHTML = `${back('#/profile/perso', 'Informations personnelles')}<h2>Informations du compte</h2><div class="box"><form class="f" id="pf">
     <label>Nom<input name="name" required value="${esc(m.name || '')}"></label>
-    <label>Numéro WhatsApp<input name="phone" inputmode="tel" placeholder="0197392704" value="${esc(m.phone || '')}"></label>
+    <label>Numéro de téléphone<input name="phone" inputmode="tel" placeholder="Ex : 01 XX XX XX XX" value="${esc(m.phone || '')}"></label>
     <small>E-mail : ${esc(user.email)} (non modifiable)</small>
     <button class="btn" id="pb">Enregistrer</button></form></div>`;
     $('#pf').onsubmit = async e => {
@@ -509,7 +516,7 @@ function profileConfidentialite() {
   const p = user.user_metadata?.privacy || {};
   const row = (key, label, desc, checked) => `<div class="toggle-row"><div><b>${label}</b><p>${desc}</p></div><label class="switch"><input type="checkbox" data-priv="${key}" ${checked ? 'checked' : ''}><span></span></label></div>`;
   app.innerHTML = `${back('#/profile')}<h2>Confidentialité</h2><div class="box">
-  ${row('show_phone_public', 'Afficher mon numéro WhatsApp sur mes annonces', 'Nécessaire pour que les acheteurs puissent vous contacter directement. Si désactivé, seul le bouton de messagerie interne restera disponible.', p.show_phone_public !== false)}
+  ${row('show_phone_public', 'Afficher mon numéro de téléphone sur mes annonces', 'Nécessaire pour que les acheteurs puissent vous contacter directement. Si désactivé, seul le bouton de messagerie interne restera disponible.', p.show_phone_public !== false)}
   ${row('allow_messages', 'Recevoir des messages de nouveaux acheteurs', 'Autorise les autres utilisateurs à démarrer une conversation avec vous depuis vos annonces.', p.allow_messages !== false)}
   </div><p style="color:var(--mute);font-size:12.5px;padding:0 4px">Vos choix sont enregistrés immédiatement sur votre compte.</p>`;
   document.querySelectorAll('[data-priv]').forEach(el => el.onchange = async () => {
@@ -567,8 +574,8 @@ function profileAffichage() {
 }
 
 const FAQ = [
-  ['Comment publier une annonce ?', 'Cliquez sur "＋ Publier une annonce" en haut de l\u2019écran, remplissez le titre, la catégorie, le prix, la localisation et votre numéro WhatsApp, ajoutez au moins une photo, puis validez.'],
-  ['Comment contacter un vendeur ?', 'Ouvrez l\u2019annonce qui vous intéresse : vous pouvez soit cliquer sur "Contacter sur WhatsApp", soit lui envoyer un message directement sur NovaMarket.'],
+  ['Comment publier une annonce ?', 'Cliquez sur "＋ Publier une annonce" en haut de l\u2019écran, remplissez le titre, la catégorie, le prix, la localisation et votre numéro de téléphone, ajoutez au moins une photo, puis validez.'],
+  ['Comment contacter un vendeur ?', 'Ouvrez l\u2019annonce qui vous intéresse : vous pouvez appeler le vendeur avec l\u2019icône 📞, ou lui écrire directement sur NovaMarket avec l\u2019icône 💬.'],
   ['Comment modifier ou supprimer mon annonce ?', 'Ouvrez votre annonce (depuis "Mes annonces" dans votre profil), puis utilisez les boutons "Modifier" ou "Supprimer".'],
   ['NovaMarket gère-t-il le paiement entre acheteur et vendeur ?', 'Pour l\u2019instant, non : les paiements se font directement entre vous et l\u2019autre personne, en main propre de préférence. Un paiement en ligne sécurisé est en cours de mise en place.'],
   ['Comment ajouter ou retirer un favori ?', 'Cliquez sur le cœur affiché sur une annonce. Retrouvez ensuite tous vos favoris dans "Mes favoris", dans votre profil.'],
@@ -603,7 +610,7 @@ function legalPage() {
   <div class="box"><b>Éditeur du site</b><p>NovaMarket est une plateforme de petites annonces destinée au marché béninois.<br>Contact : WhatsApp 0197392704 · Téléphone <a href="tel:0161209887">0161209887</a> · Zone : Bénin, Agbato.</p></div>
   <div class="box"><b>Rôle de la plateforme</b><p>NovaMarket met en relation des personnes souhaitant acheter, vendre ou échanger des biens et services. NovaMarket n'est ni vendeur ni acheteur : chaque annonce est publiée et gérée sous l'entière responsabilité de son auteur. Vérifiez toujours un bien avant de payer et privilégiez les remises en main propre.</p></div>
   <div class="box"><b>Contenu autorisé</b><p>Les annonces doivent respecter la loi béninoise et ne pas concerner des biens ou services interdits, volés, contrefaits ou dangereux. NovaMarket se réserve le droit de retirer toute annonce non conforme.</p></div>
-  <div class="box"><b>Données personnelles</b><p>Lors de l'inscription, NovaMarket conserve votre nom, votre e-mail et votre numéro WhatsApp afin de faire fonctionner votre compte, vos annonces et la messagerie. Ces données sont hébergées chez Supabase et ne sont jamais vendues à des tiers. Votre numéro WhatsApp est visible par les personnes intéressées par vos annonces, car il sert au contact direct.</p></div>
+  <div class="box"><b>Données personnelles</b><p>Lors de l'inscription, NovaMarket conserve votre nom, votre e-mail et votre numéro de téléphone afin de faire fonctionner votre compte, vos annonces et la messagerie. Ces données sont hébergées chez Supabase et ne sont jamais vendues à des tiers. Votre numéro de téléphone est visible par les personnes intéressées par vos annonces, car il sert au contact direct.</p></div>
   <div class="box"><b>Photos</b><p>Les photos que vous ajoutez à une annonce sont stockées de façon sécurisée et restent visibles tant que l'annonce existe. Vous pouvez les retirer ou supprimer votre annonce à tout moment depuis votre profil.</p></div>
   <div class="box"><b>Cookies</b><p>NovaMarket utilise uniquement les informations nécessaires à votre connexion (session). Aucun cookie publicitaire n'est utilisé.</p></div>`;
 }
